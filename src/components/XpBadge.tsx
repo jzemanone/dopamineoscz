@@ -63,10 +63,10 @@ export const XpBadge: React.FC<XpBadgeProps> = ({
     return (
       <button
         onClick={onOpenStats}
-        className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-bold hover:bg-amber-500/20 transition-all active:scale-95 shadow-sm"
+        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-amber-500/15 border border-amber-500/40 text-amber-300 text-xs font-bold hover:bg-amber-500/25 transition-all active:scale-95 shadow-sm shadow-amber-500/10"
         title={`Streak: ${stats.streak} aktivních dní v řadě. Klikni pro statistiky a trofeje.`}
       >
-        <Flame className="w-3.5 h-3.5 fill-amber-500 stroke-none" />
+        <Flame className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
         <span className="font-extrabold">{stats.streak}d streak</span>
       </button>
     );
@@ -80,12 +80,15 @@ export const XpBadge: React.FC<XpBadgeProps> = ({
       {/* 2. ✨ Level {lvl} ({xp} XP) */}
       <button
         onClick={onOpenStats}
-        className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-900 border border-slate-800 text-xs font-bold text-slate-200 hover:border-slate-700 hover:bg-slate-850 transition-all active:scale-95 shadow-sm"
-        title={`Level ${stats.level} (${stats.xp} celkem XP)`}
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-900/95 border border-indigo-500/40 text-xs font-black text-slate-100 hover:border-indigo-400 hover:bg-slate-850 transition-all active:scale-95 shadow-md shadow-indigo-500/15 shrink-0"
+        title={`Level ${stats.level} (${stats.xp} celkem XP) · Klikni pro statistiky a trofeje`}
       >
-        <Sparkles className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
-        <span className="text-indigo-300 font-black">Lvl {stats.level}</span>
-        <span className="text-[11px] text-slate-400 font-mono">({stats.xp} XP)</span>
+        <span className="flex items-center justify-center w-4 h-4 rounded-full bg-indigo-500/25 text-indigo-300 text-[10px] font-black">
+          ★
+        </span>
+        <span className="text-amber-400 font-black tracking-tight">Lvl {stats.level}</span>
+        <span className="h-3 w-[1px] bg-slate-700 mx-0.5" />
+        <span className="text-[11px] text-slate-300 font-mono font-bold">{stats.xp} XP</span>
       </button>
 
       {/* Real-time Floating XP Gain Toast */}

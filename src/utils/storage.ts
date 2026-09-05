@@ -20,20 +20,20 @@ export const DAILY_SUMMARIES_KEY = 'focus_daily_summaries_v1';
 export const DEFAULT_OPEN_LOOPS: OpenLoop[] = [
   {
     id: 'loop-1',
-    title: 'Reply to Peter regarding the proposal',
-    person: 'Peter',
-    dueDate: new Date(Date.now() + 86400000).toISOString().split('T')[0], // Tomorrow
+    title: 'Odpovědět Petrovi ohledně nabídky',
+    person: 'Petr',
+    dueDate: new Date(Date.now() + 86400000).toISOString().split('T')[0], // Zítra
     softUrgency: 'tomorrow',
     createdAt: Date.now() - 86400000,
     parkedCount: 1,
     status: 'open',
     sourceType: 'brain_dump',
-    notes: 'Just 2 sentences and confirming the timeline.',
+    notes: 'Stačí 2 věty a potvrzení termínu.',
   },
   {
     id: 'loop-2',
-    title: 'Call mom this weekend',
-    person: 'Mom',
+    title: 'Zavolat mámě o víkendu',
+    person: 'Máma',
     softUrgency: 'this_week',
     createdAt: Date.now() - 172800000,
     parkedCount: 0,
@@ -46,19 +46,19 @@ export const DEFAULT_OPEN_LOOPS: OpenLoop[] = [
 export const DEFAULT_TASKS: Task[] = [
   {
     id: 't-1',
-    title: 'Reply to 1 priority message or email',
+    title: 'Vyřídit 1 prioritní zprávu nebo e-mail',
     estimatedMinutes: 2,
     energyLevel: 'low',
     category: 'work',
     completed: false,
     createdAt: Date.now() - 3600000,
     xpReward: 30,
-    notes: 'Keep it brief - 3 sentences max.',
+    notes: 'Piš stručně – maximálně 3 věty.',
     parkedCount: 0,
   },
   {
     id: 't-2',
-    title: 'Hydrate & stretch shoulders (2 min win)',
+    title: 'Napít se vody a protáhnout ramena (2 min výhra)',
     estimatedMinutes: 2,
     energyLevel: 'low',
     category: 'health',
@@ -69,7 +69,7 @@ export const DEFAULT_TASKS: Task[] = [
   },
   {
     id: 't-3',
-    title: 'Review & clear 5 download files',
+    title: 'Zkontrolovat a smazat 5 stažených souborů',
     estimatedMinutes: 5,
     energyLevel: 'medium',
     category: 'admin',
@@ -80,7 +80,7 @@ export const DEFAULT_TASKS: Task[] = [
   },
   {
     id: 't-4',
-    title: 'Draft key paragraph for focus goal',
+    title: 'Napsat klíčový odstavec pro hlavní cíl',
     estimatedMinutes: 15,
     energyLevel: 'high',
     category: 'work',
@@ -183,8 +183,21 @@ export function loadAppState(): FocusFlowState {
 
       const isDayClosed = parsed.lastClosedDay === today;
 
+      const sanitizeTaskTitles = (rawTasks: Task[]): Task[] => {
+        return rawTasks.map((t) => {
+          let title = t.title;
+          if (title === 'Reply to 1 priority message or email') title = 'Vyřídit 1 prioritní zprávu nebo e-mail';
+          else if (title === 'Hydrate & stretch shoulders (2 min win)') title = 'Napít se vody a protáhnout ramena (2 min výhra)';
+          else if (title === 'Review & clear 5 download files') title = 'Zkontrolovat a smazat 5 stažených souborů';
+          else if (title === 'Draft key paragraph for focus goal') title = 'Napsat klíčový odstavec pro hlavní cíl';
+          return { ...t, title };
+        });
+      };
+
+      const rawTasks = Array.isArray(parsed.tasks) && parsed.tasks.length > 0 ? parsed.tasks : DEFAULT_TASKS;
+
       return {
-        tasks: Array.isArray(parsed.tasks) && parsed.tasks.length > 0 ? parsed.tasks : DEFAULT_TASKS,
+        tasks: sanitizeTaskTitles(rawTasks),
         openLoops,
         spendingPauses,
         customMeals,

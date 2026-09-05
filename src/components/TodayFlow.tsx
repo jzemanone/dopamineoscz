@@ -1,34 +1,16 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Check,
-  SkipForward,
-  Split,
-  Sparkles,
-  Zap,
-  Flame,
-  ArrowRight,
-  ChevronLeft,
-  ChevronRight,
-  Bot,
-  AlertTriangle,
-  Play,
-  Pause,
-  RotateCcw,
-  Plus,
-  Compass,
-  Clock,
+  RefreshCw,
+  X,
   Layers,
-  Sparkle,
-  ArrowUpRight,
-  CheckCircle2,
-  BookmarkPlus,
-  User,
-  Calendar,
-  AlertCircle,
   Archive,
-  Lock,
-  Key,
-  Shield,
+  ArrowRight,
+  Flame,
+  User,
+  Plus,
+  Zap,
+  Sparkles,
 } from 'lucide-react';
 import { Task, EnergyLevel, normalizeBiologicalCapacity } from '../types';
 import { soundManager } from '../utils/audio';
@@ -68,19 +50,14 @@ export const TodayFlow: React.FC<TodayFlowProps> = ({
   activeTask,
   upNextTasks,
   onCompleteTask,
-  onSkipTask,
   onParkTask,
   onDropTask,
   onSelectTask,
-  onDecomposeTask,
   onUpdateTaskSubtasks,
-  onAddSubtask,
   onToggleSubtask,
   onQuickAddTask,
   onOpenDumpModal,
   onPlayClick,
-  onTick,
-  onTimerComplete,
   onAwardXp,
   currentCapacity,
   soundEnabled,
@@ -91,29 +68,16 @@ export const TodayFlow: React.FC<TodayFlowProps> = ({
   onOpenPaywall,
   onOpenRestoreLicense,
 }) => {
-  // Step carousel state
-  const [activeStepIndex, setActiveStepIndex] = useState<number>(0);
-  const [freezeMode, setFreezeMode] = useState<boolean>(false);
-  const [freezeSeconds, setFreezeSeconds] = useState<number>(10);
-
-  // 2-minute focus timer state
-  const [stepTimerSeconds, setStepTimerSeconds] = useState<number>(120);
-  const [isStepTimerRunning, setIsStepTimerRunning] = useState<boolean>(false);
   const [autoDecomposing, setAutoDecomposing] = useState<boolean>(false);
+  const [isSwapModalOpen, setIsSwapModalOpen] = useState<boolean>(false);
   const [quickInput, setQuickInput] = useState<string>('');
+  const [recentStepCelebrationId, setRecentStepCelebrationId] = useState<string | null>(null);
 
   // Auto-decompose task on promotion if it has no subtasks
   useEffect(() => {
     if (!activeTask) return;
 
-    // Reset step index to first incomplete subtask
-    if (activeTask.subtasks && activeTask.subtasks.length > 0) {
-      const firstIncompleteIdx = activeTask.subtasks.findIndex((s) => !s.completed);
-      setActiveStepIndex(firstIncompleteIdx !== -1 ? firstIncompleteIdx : 0);
-    } else {
-      setActiveStepIndex(0);
-
-      // Auto-trigger background decomposition
+    if (!activeTask.subtasks || activeTask.subtasks.length === 0) {
       let isCancelled = false;
       setAutoDecomposing(true);
 
@@ -138,98 +102,56 @@ export const TodayFlow: React.FC<TodayFlowProps> = ({
         isCancelled = true;
       };
     }
-
-    setFreezeMode(false);
-    setFreezeSeconds(10);
-    setStepTimerSeconds(120);
-    setIsStepTimerRunning(false);
   }, [activeTask?.id]);
 
-  // 10-Second Freeze Breaker Loop
-  useEffect(() => {
-    let interval: NodeJS.Timeout | null = null;
-    if (freezeMode && freezeSeconds > 0) {
-      interval = setInterval(() => {
-        setFreezeSeconds((prev) => {
-          if (prev <= 1) {
-            soundManager.playSuccess(soundEnabled);
-            soundManager.triggerHaptic(hapticEnabled);
-            onAwardXp(15, '10s prolomení paralýzy dokončeno (+15 XP)');
-            setFreezeMode(false);
-            return 10;
-          }
-          if (soundEnabled) soundManager.playTick(soundEnabled);
-          return prev - 1;
-        });
-      }, 1000);
-    }
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [freezeMode, freezeSeconds, soundEnabled, hapticEnabled, onAwardXp]);
-
-  // 2-Minute Step Timer Loop
-  useEffect(() => {
-    let interval: NodeJS.Timeout | null = null;
-    if (isStepTimerRunning && stepTimerSeconds > 0) {
-      interval = setInterval(() => {
-        setStepTimerSeconds((prev) => {
-          if (prev <= 1) {
-            soundManager.playSuccess(soundEnabled);
-            soundManager.triggerHaptic(hapticEnabled);
-            setIsStepTimerRunning(false);
-            onTimerComplete(2);
-            return 0;
-          }
-          if (prev % 10 === 0) onTick();
-          return prev - 1;
-        });
-      }, 1000);
-    }
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [isStepTimerRunning, stepTimerSeconds, soundEnabled, hapticEnabled, onTick, onTimerComplete]);
-
-  // Quick submit to queue
-  const handleQuickAddSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!quickInput.trim()) return;
+  // Safety brake: regenerate 3 steps with strict ADHD prompt
+  const handleRegenerate = async () => {
+    if (!activeTask || autoDecomposing) return;
     onPlayClick();
-    onQuickAddTask(quickInput.trim(), currentCapacity);
-    setQuickInput('');
+    setAutoDecomposing(true);
+    const bioMode = normalizeBiologicalCapacity(currentCapacity);
+    try {
+      const res = await decomposeWithAI(activeTask.title, bioMode, true);
+      if (res.steps && res.steps.length > 0) {
+        onUpdateTaskSubtasks(activeTask.id, res.steps);
+      }
+    } catch {
+      const fallback = getLocalHeuristicDecomposition(activeTask.title, bioMode);
+      if (fallback.steps && fallback.steps.length > 0) {
+        onUpdateTaskSubtasks(activeTask.id, fallback.steps);
+      }
+    } finally {
+      setAutoDecomposing(false);
+    }
   };
 
   // If literally all tasks are completed across the entire app
   if (!activeTask && totalPendingCount === 0) {
     return (
-      <div className="space-y-4 animate-fadeIn">
-        <div className="p-8 rounded-3xl bg-gradient-to-b from-slate-900 via-slate-900/90 to-slate-950 border border-amber-500/30 text-center space-y-4 shadow-2xl relative overflow-hidden">
-          <div className="absolute -top-12 -right-12 w-36 h-36 bg-amber-500/10 rounded-full blur-2xl pointer-events-none" />
-          <div className="w-16 h-16 rounded-3xl bg-amber-500/20 border border-amber-500/40 text-amber-400 mx-auto flex items-center justify-center shadow-lg shadow-amber-500/10">
-            <Sparkles className="w-8 h-8" />
-          </div>
-          <div>
-            <h2 className="text-xl font-black text-slate-100 tracking-tight">
-              Všechny úkoly rozdrceny!
-            </h2>
-            <p className="text-xs text-slate-400 max-w-xs mx-auto mt-1">
-              Tvoje fronta v Dopamine OS je čistá. Udržuj streak nebo vysyp nové myšlenky.
-            </p>
-          </div>
+      <div className="p-8 rounded-3xl bg-neutral-950 border-2 border-neutral-800 text-center space-y-5 animate-fadeIn">
+        <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border-2 border-amber-500/30 text-amber-400 mx-auto flex items-center justify-center shadow-lg shadow-amber-500/10">
+          <Sparkles className="w-8 h-8" />
+        </div>
+        <div>
+          <h2 className="text-2xl font-black text-white tracking-tight uppercase">
+            Všechny úkoly rozdrceny!
+          </h2>
+          <p className="text-xs text-neutral-400 max-w-xs mx-auto mt-2 font-medium">
+            Fronta je čistá. Žádný stres, žádná paralýza. Užij si dopamin nebo přidej nový cíl.
+          </p>
+        </div>
 
-          <div className="pt-2 flex flex-col sm:flex-row gap-2 justify-center">
-            <button
-              onClick={() => {
-                onPlayClick();
-                onOpenDumpModal();
-              }}
-              className="py-3 px-5 bg-gradient-to-r from-amber-500 to-amber-400 text-slate-950 font-black text-xs uppercase tracking-wider rounded-2xl shadow-lg shadow-amber-500/20 hover:brightness-110 active:scale-98 transition-all flex items-center justify-center gap-2"
-            >
-              <Plus className="w-4 h-4 stroke-[3]" />
-              <span>Vysypat nové úkoly (+20 XP)</span>
-            </button>
-          </div>
+        <div className="pt-2 flex justify-center">
+          <button
+            onClick={() => {
+              onPlayClick();
+              onOpenDumpModal();
+            }}
+            className="py-3.5 px-6 bg-white hover:bg-neutral-200 text-black font-black text-xs uppercase tracking-wider rounded-2xl shadow-xl transition-all flex items-center justify-center gap-2 active:scale-95"
+          >
+            <Plus className="w-4 h-4 stroke-[3]" />
+            <span>Zadat nový úkol (+20 XP)</span>
+          </button>
         </div>
       </div>
     );
@@ -241,483 +163,401 @@ export const TodayFlow: React.FC<TodayFlowProps> = ({
   }
 
   const subtasks = activeTask.subtasks || [];
-  const hasSubtasks = subtasks.length > 0;
-  const currentSubtask = hasSubtasks ? subtasks[activeStepIndex] || subtasks[0] : null;
-  const isFinalStep = !hasSubtasks || activeStepIndex >= subtasks.length - 1;
   const isPatternAvoided = (activeTask.parkedCount || 0) >= 3;
-
-  const timerMins = Math.floor(stepTimerSeconds / 60);
-  const timerSecs = stepTimerSeconds % 60;
-  const timerFormatted = `${timerMins}:${timerSecs < 10 ? '0' : ''}${timerSecs}`;
-
-  // Step advancement handler
-  const handleStepDone = () => {
-    onPlayClick();
-    if (hasSubtasks && currentSubtask) {
-      if (!currentSubtask.completed) {
-        onToggleSubtask(activeTask.id, currentSubtask.id);
-        onAwardXp(10, `Krok ${activeStepIndex + 1} hotov (+10 XP)`);
-        trackStepCompleted({
-          stepIndex: activeStepIndex,
-          totalSteps: subtasks.length,
-          taskTitle: activeTask.title,
-          xpEarned: 10,
-        });
-      }
-
-      if (activeStepIndex < subtasks.length - 1) {
-        setActiveStepIndex((prev) => prev + 1);
-        setStepTimerSeconds(120);
-        setIsStepTimerRunning(false);
-      } else {
-        // All micro-steps completed -> finish entire task
-        trackTaskCompleted({
-          taskId: activeTask.id,
-          taskTitle: activeTask.title,
-          xpEarned: activeTask.xpReward || 50,
-          energyLevel: activeTask.energyLevel,
-        });
-        onCompleteTask(activeTask.id);
-      }
-    } else {
-      trackTaskCompleted({
-        taskId: activeTask.id,
-        taskTitle: activeTask.title,
-        xpEarned: activeTask.xpReward || 50,
-        energyLevel: activeTask.energyLevel,
-      });
-      onCompleteTask(activeTask.id);
-    }
-  };
-
-  const handleStepPrev = () => {
-    onPlayClick();
-    if (activeStepIndex > 0) {
-      setActiveStepIndex((prev) => prev - 1);
-    }
-  };
-
-  const handleStepNext = () => {
-    onPlayClick();
-    if (activeStepIndex < subtasks.length - 1) {
-      setActiveStepIndex((prev) => prev + 1);
-    }
-  };
-
   const isLimitReached = !isPro && completedTasksCountToday >= 3;
 
+  // Derive 3 display steps
+  const displaySteps =
+    subtasks.length > 0
+      ? subtasks.slice(0, 3)
+      : [
+          { id: 'def-1', title: 'Otevři potřebný program', completed: false },
+          { id: 'def-2', title: 'Napiš první slovo', completed: false },
+          { id: 'def-3', title: 'Dokonči první detail', completed: false },
+        ];
+
+  const allStepsCompleted =
+    displaySteps.length > 0 && displaySteps.every((s) => s.completed);
+
+  // Toggle step handler with gamification feedback
+  const handleToggleStep = (step: { id: string; title: string; completed: boolean }, idx: number) => {
+    onPlayClick();
+    const nextCompleted = !step.completed;
+
+    if (nextCompleted) {
+      soundManager.playSuccess(soundEnabled);
+      soundManager.triggerHaptic(hapticEnabled);
+      onAwardXp(10, `Krok ${idx + 1} hotov (+10 XP)`);
+      trackStepCompleted({
+        stepIndex: idx,
+        totalSteps: displaySteps.length,
+        taskTitle: activeTask.title,
+        xpEarned: 10,
+      });
+
+      setRecentStepCelebrationId(step.id);
+      setTimeout(() => setRecentStepCelebrationId(null), 1800);
+    }
+
+    if (subtasks.some((s) => s.id === step.id)) {
+      onToggleSubtask(activeTask.id, step.id);
+    } else {
+      // If using fallback dummy steps, create actual subtasks in task
+      const updatedTitles = displaySteps.map((s) => s.title);
+      onUpdateTaskSubtasks(activeTask.id, updatedTitles);
+    }
+  };
+
+  // Complete entire task handler
+  const handleFinishEntireTask = () => {
+    onPlayClick();
+    soundManager.playSuccess(soundEnabled);
+    soundManager.triggerHaptic(hapticEnabled);
+    trackTaskCompleted({
+      taskId: activeTask.id,
+      taskTitle: activeTask.title,
+      xpEarned: activeTask.xpReward || 50,
+      energyLevel: activeTask.energyLevel,
+    });
+    onAwardXp(activeTask.xpReward || 50, `Úkol dokončen (+${activeTask.xpReward || 50} XP)`);
+    onCompleteTask(activeTask.id);
+  };
+
+  // Quick submit to queue inside the switch modal
+  const handleQuickAddInsideModal = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!quickInput.trim()) return;
+    onPlayClick();
+    onQuickAddTask(quickInput.trim(), currentCapacity);
+    setQuickInput('');
+  };
+
   return (
-    <div className="space-y-4 animate-fadeIn">
-      {/* If task has been repeatedly postponed (parkedCount >= 3), show Pattern Flag card */}
+    <div className="w-full space-y-6 animate-fadeIn select-none">
+      {/* Pattern avoided warning if task has been postponed 3+ times */}
       {isPatternAvoided && !isLimitReached && (
         <PatternFlagCard
           task={activeTask}
           onShrinkSteps={(taskId, newSteps) => {
             onUpdateTaskSubtasks(taskId, newSteps);
-            setActiveStepIndex(0);
-            setStepTimerSeconds(60);
           }}
           onDropTask={onDropTask}
           onPlayClick={onPlayClick}
         />
       )}
 
-      {/* ========================================================================= */}
-      {/* 1. ACTIVE FOCUS CARD OR CELEBRATORY DAILY LIMIT REACHED CARD */}
-      {/* ========================================================================= */}
+      {/* Daily limit reached banner for freemium */}
       {isLimitReached ? (
         <section
           aria-label="Denní fokus splněn"
-          className="relative bg-gradient-to-b from-[#111622] to-[#0B0F17] border border-amber-500/40 rounded-3xl p-5 sm:p-6 shadow-2xl shadow-amber-500/10 overflow-hidden ring-1 ring-amber-500/20 space-y-4"
+          className="bg-neutral-950 border-2 border-amber-500/40 rounded-3xl p-6 shadow-2xl space-y-4"
         >
-          {/* Ambient Glow */}
-          <div className="absolute -top-16 -right-16 w-36 h-36 bg-amber-500/15 rounded-full blur-3xl pointer-events-none" />
-
-          <div className="flex items-center justify-between gap-2 border-b border-white/5 pb-3">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[10px] font-black uppercase tracking-wider">
-              <Sparkles className="w-3 h-3 text-amber-400" />
-              Denní fokus splněn
+          <div className="flex items-center justify-between gap-2 border-b border-neutral-800 pb-3">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/40 text-amber-300 text-xs font-black uppercase tracking-wider">
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+              Denní limit zdarma dosažen
             </span>
-            <span className="text-xs font-black text-amber-400">3/3 Mikro-výhry (+30 XP)</span>
+            <span className="text-xs font-black text-amber-400">3/3 úkoly</span>
           </div>
 
-          <div className="space-y-1.5">
-            <h3 className="text-base sm:text-lg font-black text-slate-100 leading-snug">
-              3/3 Mikro-výhry dnes dokončeny (získáno +30 XP)
+          <div className="space-y-2">
+            <h3 className="text-xl font-black text-white">
+              3/3 úkolů dnes dokončeno!
             </h3>
-            <p className="text-xs text-slate-300 leading-relaxed">
-              Dnešní příděl fokusu máš v kapse! Odemkni si neomezené rozsekávání s AI, nepřerušené flow a doživotní synchronizaci bez předplatného.
+            <p className="text-xs text-neutral-300 leading-relaxed">
+              Dnešní příděl bezplatných úkolů máš v kapse. Odemkni si neomezené rozsekávání kroků a doživotní přístup bez předplatného.
             </p>
           </div>
 
-          <div className="space-y-2 pt-1">
+          <div className="space-y-2 pt-2">
             <button
               onClick={() => {
                 onPlayClick();
                 if (onOpenPaywall) onOpenPaywall();
               }}
-              className="w-full py-3.5 px-4 bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-400 hover:brightness-110 active:scale-98 text-slate-950 font-black text-xs sm:text-sm uppercase tracking-wider rounded-2xl shadow-xl shadow-amber-500/25 transition-all flex items-center justify-center gap-2"
+              className="w-full py-4 px-4 bg-amber-400 hover:bg-amber-300 text-black font-black text-xs uppercase tracking-wider rounded-2xl shadow-xl transition-all flex items-center justify-center gap-2 active:scale-98"
             >
               <Zap className="w-4 h-4 fill-current stroke-none" />
-              <span>🚀 Zrušit denní limity ($27)</span>
+              <span>Získat neomezený přístup (390 Kč)</span>
             </button>
 
-            <div className="flex items-center justify-between text-xs text-slate-400 pt-1">
+            <div className="flex items-center justify-between text-xs text-neutral-400 pt-1">
               <button
                 onClick={() => {
                   onPlayClick();
                   if (onOpenRestoreLicense) onOpenRestoreLicense();
                 }}
-                className="hover:text-amber-300 transition-colors font-semibold py-1 px-1.5 rounded-lg hover:bg-slate-800/40"
+                className="hover:text-white transition-colors font-semibold py-1 px-1 rounded-lg"
               >
-                Už máš licenci? Zadej klíč
+                Už máš klíč? Zadej licenci
               </button>
-              <span className="text-[11px] text-slate-400 font-medium">Obnovuje se denně o půlnoci</span>
+              <span className="text-[11px] text-neutral-500">Obnovuje se o půlnoci</span>
             </div>
           </div>
         </section>
       ) : (
-      <section
-        aria-label="Active Autopilot Task"
-        className="relative bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 border border-slate-750/90 rounded-3xl p-4 sm:p-5 shadow-2xl shadow-slate-950/80 overflow-hidden ring-1 ring-white/5 space-y-4"
-      >
-        {/* Subtle Ambient Glow */}
-        <div className="absolute -top-16 -right-16 w-36 h-36 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+        /* ========================================================================= */
+        /* BRUTALIST DARK FOCUS MODE: ONLY 1 ACTIVE TASK ON SCREEN                   */
+        /* ========================================================================= */
+        <section
+          aria-label="Aktivní úkol"
+          className="bg-black border-2 border-neutral-800 rounded-3xl p-5 sm:p-7 shadow-2xl space-y-6"
+        >
+          {/* Top minimal status bar */}
+          <div className="flex items-center justify-between gap-3 border-b border-neutral-900 pb-3">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-[11px] font-mono font-bold uppercase tracking-widest text-neutral-400">
+                Aktivní cíl
+              </span>
+            </div>
 
-        {/* Autopilot Status Header */}
-        <div className="flex items-center justify-between gap-2 border-b border-slate-800/80 pb-3">
-          <div className="flex items-center gap-2">
-            <span className="flex h-2 w-2 relative">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
-            </span>
-            <span className="text-[11px] font-black tracking-wider uppercase text-amber-400 flex items-center gap-1">
-              <Compass className="w-3.5 h-3.5" />
-              Autopilot fokus
-            </span>
+            <div className="flex items-center gap-2">
+              {activeTask.isDeadlinePromoted && (
+                <span className="px-2 py-0.5 rounded-md bg-rose-500/20 text-rose-300 border border-rose-500/40 text-[10px] font-mono font-black uppercase flex items-center gap-1">
+                  <Flame className="w-3 h-3 fill-current" />
+                  Termín
+                </span>
+              )}
+
+              {activeTask.person && (
+                <span className="px-2 py-0.5 rounded-md bg-neutral-800 text-neutral-300 border border-neutral-700 text-[10px] font-mono font-bold flex items-center gap-1">
+                  <User className="w-3 h-3" />
+                  {activeTask.person}
+                </span>
+              )}
+
+              <span className="px-2 py-0.5 rounded-md bg-neutral-900 text-amber-400 text-[10px] font-mono font-black border border-neutral-800">
+                +{activeTask.xpReward || 50} XP
+              </span>
+            </div>
           </div>
 
-          <div className="flex items-center gap-1.5 flex-wrap justify-end">
-            {activeTask.isDeadlinePromoted && (
-              <span className="px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/40 text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
-                <Flame className="w-2.5 h-2.5 fill-current" />
-                Termín &lt; 48h
-              </span>
-            )}
+          {/* Dominate Screen: Giant Active Task Title + Discreet Swap Button */}
+          <div className="space-y-3">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white tracking-tight leading-tight select-text break-words">
+              {activeTask.title}
+            </h1>
 
-            {activeTask.person && (
-              <span className="px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 text-[10px] font-bold flex items-center gap-0.5">
-                <User className="w-2.5 h-2.5" />
-                {activeTask.person}
-              </span>
-            )}
+            {/* Discreet text button to switch task */}
+            <div className="flex items-center gap-3 pt-1">
+              <button
+                type="button"
+                onClick={() => {
+                  onPlayClick();
+                  setIsSwapModalOpen(true);
+                }}
+                className="text-xs font-mono font-bold text-neutral-400 hover:text-white underline underline-offset-4 decoration-neutral-700 hover:decoration-white transition-colors cursor-pointer inline-flex items-center gap-1.5 py-1 px-0"
+              >
+                <Layers className="w-3.5 h-3.5" />
+                <span>Vyměnit úkol ({upNextTasks.length})</span>
+              </button>
 
-            <span className="px-2 py-0.5 rounded-full bg-slate-800 text-amber-300 text-[10px] font-black border border-slate-700 flex items-center gap-0.5">
-              +{activeTask.xpReward || 30} XP
-            </span>
-          </div>
-        </div>
-
-        {/* Big Active Task Title */}
-        <div className="space-y-1">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-              Aktivní cíl
-            </span>
-            {(activeTask.parkedCount || 0) > 0 && (
-              <span className="text-[10px] font-bold text-slate-400 bg-slate-800/80 px-2 py-0.5 rounded-full">
-                {activeTask.parkedCount}× odloženo
-              </span>
-            )}
-          </div>
-          <h2 className="text-base sm:text-lg font-black text-slate-100 leading-snug tracking-tight">
-            {activeTask.title}
-          </h2>
-          {activeTask.notes && (
-            <p className="text-xs text-slate-400 font-medium italic">
-              {activeTask.notes}
-            </p>
-          )}
-        </div>
-
-        {/* ========================================================================= */}
-        {/* Micro-Step Carousel / Step Box */}
-        {/* ========================================================================= */}
-        <div className="bg-slate-950/90 rounded-2xl border border-slate-800/90 p-3 sm:p-4 space-y-3 shadow-inner">
-          {/* Step Meta Bar */}
-          <div className="flex items-center justify-between text-xs">
-            <div className="flex items-center gap-1.5 font-bold">
-              <span className="text-slate-400 text-[11px] uppercase tracking-wider">
-                Mikro-krok:
-              </span>
-              <span className="text-amber-400 font-black text-xs">
-                {hasSubtasks
-                  ? `${activeStepIndex + 1} z ${subtasks.length}${isFinalStep ? ' (Akce)' : ''}`
-                  : '1 z 1'}
-              </span>
-              {autoDecomposing && (
-                <span className="flex items-center gap-1 text-[10px] text-amber-400/80 animate-pulse ml-1 font-medium">
-                  <Sparkles className="w-3 h-3" />
-                  Gemini rozsekává...
+              {(activeTask.parkedCount || 0) > 0 && (
+                <span className="text-[10px] font-mono text-neutral-500 bg-neutral-900 px-2 py-0.5 rounded border border-neutral-800">
+                  {activeTask.parkedCount}× odloženo
                 </span>
               )}
             </div>
+          </div>
 
-            {/* Pagination Dots */}
-            {hasSubtasks && subtasks.length > 1 && (
-              <div className="flex items-center gap-1">
-                {subtasks.map((st, idx) => (
+          {/* ========================================================================= */}
+          {/* INTERACTIVE 3 MICRO-STEPS (Massive buttons + Dopamine Feedback)           */}
+          {/* ========================================================================= */}
+          <div className="space-y-3 pt-2">
+            {/* Steps Header with Safety Brake "Přegenerovat" button */}
+            <div className="flex items-center justify-between text-xs pb-1">
+              <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-neutral-400">
+                3 fyzické mikro-kroky (&lt;10s):
+              </span>
+
+              <button
+                type="button"
+                onClick={handleRegenerate}
+                disabled={autoDecomposing}
+                className="text-xs font-mono font-bold text-neutral-400 hover:text-amber-400 flex items-center gap-1.5 transition-colors disabled:opacity-40 px-2 py-1 rounded-lg hover:bg-neutral-900 border border-transparent hover:border-neutral-800"
+                title="Záchranná brzda: Pokud kroky nesedí, vygeneruj nové"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${autoDecomposing ? 'animate-spin text-amber-400' : ''}`} />
+                <span>{autoDecomposing ? 'Rozsekávám...' : 'Přegenerovat'}</span>
+              </button>
+            </div>
+
+            {/* 3 Massive Clickable Buttons (Checkboxes) */}
+            <div className="space-y-2.5">
+              {displaySteps.map((step, idx) => {
+                const isDone = !!step.completed;
+                const isCelebrating = recentStepCelebrationId === step.id;
+
+                return (
                   <button
-                    key={st.id}
-                    onClick={() => {
-                      onPlayClick();
-                      setActiveStepIndex(idx);
-                    }}
-                    className={`h-1.5 rounded-full transition-all ${
-                      idx === activeStepIndex
-                        ? 'w-4 bg-amber-400'
-                        : st.completed
-                        ? 'w-1.5 bg-emerald-500'
-                        : 'w-1.5 bg-slate-700'
+                    key={step.id || idx}
+                    type="button"
+                    onClick={() => handleToggleStep(step, idx)}
+                    className={`w-full p-4 sm:p-5 min-h-[64px] sm:min-h-[72px] rounded-2xl border-2 flex items-center justify-between text-left gap-3.5 transition-all duration-150 active:scale-[0.99] select-none ${
+                      isDone
+                        ? 'bg-emerald-600 border-emerald-400 text-white shadow-lg shadow-emerald-950/40'
+                        : 'bg-neutral-900 hover:bg-neutral-850 border-neutral-800 hover:border-neutral-700 text-neutral-100'
                     }`}
-                    title={`Krok ${idx + 1}`}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Micro-Step Content Display */}
-          <div className="min-h-[56px] flex items-center justify-between gap-2 p-3 rounded-xl bg-slate-900/90 border border-slate-800">
-            {hasSubtasks && subtasks.length > 1 && (
-              <button
-                onClick={handleStepPrev}
-                disabled={activeStepIndex === 0}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-200 disabled:opacity-20 transition-all shrink-0"
-                title="Předchozí krok"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-            )}
-
-            <div className="flex-1 text-center sm:text-left px-1">
-              <p className="text-sm sm:text-base font-black text-slate-100 leading-snug">
-                {currentSubtask
-                  ? currentSubtask.title
-                  : autoDecomposing
-                  ? 'Sestavuji mikro-krok bez tření...'
-                  : 'Udělej 1 jednoduchou, fyzickou akci pro start.'}
-              </p>
-            </div>
-
-            {hasSubtasks && subtasks.length > 1 && (
-              <button
-                onClick={handleStepNext}
-                disabled={activeStepIndex === subtasks.length - 1}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-200 disabled:opacity-20 transition-all shrink-0"
-                title="Další krok"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            )}
-          </div>
-
-          {/* STEP 3 CONTEXT-AWARE EXECUTION CONTROLS (Only shown in Step 3 / Final Step if sustained momentum needed) */}
-          {isFinalStep && (
-            <div className="pt-1">
-              {/* Check if task requires sustained momentum */}
-              {activeTask.estimatedMinutes >= 5 ||
-              ['deep_work', 'work', 'chore', 'physical', 'digital'].includes(activeTask.category) ||
-              /\b(code|write|draft|doc|clean|wash|laundry|tidy|study|read|review|deep|build|design|organize|sheet|exercise|gym|cook|prep)\b/i.test(
-                activeTask.title
-              ) ? (
-                <div className="flex items-center justify-between gap-2 bg-slate-900/80 border border-slate-800 p-2 rounded-xl">
-                  {/* 2-Min Momentum Sprint Controller */}
-                  <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-black uppercase text-amber-400 flex items-center gap-1">
-                      <Zap className="w-3.5 h-3.5 fill-amber-400" />
-                      Sprint rozběhu
-                    </span>
-                    <span className="font-mono text-xs font-black text-slate-200 min-w-[34px]">
-                      {timerFormatted}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        onPlayClick();
-                        setIsStepTimerRunning(!isStepTimerRunning);
-                      }}
-                      className={`px-2.5 py-1 rounded-lg text-xs font-black flex items-center gap-1 transition-all ${
-                        isStepTimerRunning
-                          ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
-                          : 'bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30'
-                      }`}
-                      title={isStepTimerRunning ? 'Pozastavit časovač' : 'Spustit 2min sprint rozběhu'}
-                    >
-                      {isStepTimerRunning ? (
-                        <>
-                          <Pause className="w-3 h-3" />
-                          <span>Pauza</span>
-                        </>
-                      ) : (
-                        <>
-                          <Play className="w-3 h-3 fill-current" />
-                          <span>Spustit 2min sprint</span>
-                        </>
-                      )}
-                    </button>
-                    {isStepTimerRunning && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          onPlayClick();
-                          setStepTimerSeconds(120);
-                          setIsStepTimerRunning(false);
-                        }}
-                        className="p-1 rounded-lg text-slate-500 hover:text-slate-300 text-xs"
-                        title="Resetovat 2min časovač"
+                  >
+                    {/* Checkbox indicator + Step text */}
+                    <div className="flex items-center gap-3.5 min-w-0 flex-1">
+                      <div
+                        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center shrink-0 border-2 transition-all ${
+                          isDone
+                            ? 'bg-white border-white text-emerald-700 font-black'
+                            : 'border-neutral-600 bg-neutral-800 text-neutral-400 font-mono text-xs font-black'
+                        }`}
                       >
-                        <RotateCcw className="w-3 h-3" />
-                      </button>
+                        {isDone ? <Check className="w-4 h-4 sm:w-5 sm:h-5 stroke-[3.5]" /> : idx + 1}
+                      </div>
+
+                      <span
+                        className={`text-base sm:text-lg font-bold leading-snug break-words ${
+                          isDone ? 'line-through opacity-90 text-white' : 'text-white'
+                        }`}
+                      >
+                        {step.title}
+                      </span>
+                    </div>
+
+                    {/* Dopamine XP Badge */}
+                    {isDone ? (
+                      <span
+                        className={`px-3 py-1 rounded-xl bg-emerald-500 text-white text-xs font-black uppercase tracking-wider shrink-0 transition-all ${
+                          isCelebrating ? 'scale-110 ring-4 ring-emerald-300/40' : ''
+                        }`}
+                      >
+                        +10 XP
+                      </span>
+                    ) : (
+                      <span className="text-[10px] font-mono text-neutral-500 uppercase tracking-wider shrink-0 px-2 py-1 rounded bg-neutral-800/80 border border-neutral-750">
+                        Klikni
+                      </span>
                     )}
-                  </div>
-                </div>
-              ) : null}
+                  </button>
+                );
+              })}
             </div>
-          )}
-        </div>
+          </div>
 
-        {/* Primary Step / Task Completion CTA */}
-        <div className="flex items-center gap-2 pt-1">
-          {/* Urgent Escape Action: Direct Task Parking (Distinct Visual Weight: Cool Blue / Slate Pill) */}
-          <button
-            onClick={() => {
-              onPlayClick();
-              onParkTask(activeTask.id);
-            }}
-            className="px-4 py-3.5 rounded-2xl bg-slate-850 hover:bg-slate-800 border border-slate-700 hover:border-sky-500/50 text-slate-200 hover:text-sky-300 text-xs font-bold transition-all flex items-center justify-center gap-1.5 active:scale-95 shadow-sm shrink-0"
-            title="Něco tě vyrušilo? Odlož úkol na konec fronty"
-          >
-            <Archive className="w-4 h-4 text-sky-400 shrink-0" />
-            <span className="font-extrabold text-sky-200">Odložit</span>
-          </button>
+          {/* ========================================================================= */}
+          {/* ACTION BUTTONS (Complete Task or Park)                                    */}
+          {/* ========================================================================= */}
+          <div className="flex items-center gap-3 pt-3">
+            {/* Park / Postpone Task Button */}
+            <button
+              type="button"
+              onClick={() => {
+                onPlayClick();
+                onParkTask(activeTask.id);
+              }}
+              className="px-4 py-4 rounded-2xl bg-neutral-900 hover:bg-neutral-850 border border-neutral-800 text-neutral-300 hover:text-white text-xs font-mono font-bold transition-all flex items-center justify-center gap-1.5 active:scale-95 shrink-0"
+              title="Odložit na konec fronty"
+            >
+              <Archive className="w-4 h-4 text-neutral-400 shrink-0" />
+              <span>Odložit</span>
+            </button>
 
-          {/* Primary Action: Giant DONE / NEXT (+10 XP) for Steps 1-2, or COMPLETE TASK for Step 3 */}
-          <button
-            onClick={handleStepDone}
-            className="flex-1 py-3.5 px-4 bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-400 text-slate-950 font-black text-xs sm:text-sm uppercase tracking-wider rounded-2xl shadow-xl shadow-amber-500/25 hover:brightness-110 active:scale-98 transition-all flex items-center justify-center gap-2 min-w-0"
-          >
-            <Check className="w-4 h-4 stroke-[3] shrink-0" />
-            <span className="truncate">
-              {isFinalStep
-                ? `Dokončit úkol (+${activeTask.xpReward || 30} XP)`
-                : `HOTOVO / DALŠÍ (+10 XP)`}
-            </span>
-          </button>
-        </div>
-      </section>
+            {/* Giant Complete Task CTA */}
+            <button
+              type="button"
+              onClick={handleFinishEntireTask}
+              className={`flex-1 py-4 px-5 rounded-2xl font-black text-xs sm:text-sm uppercase tracking-wider transition-all flex items-center justify-center gap-2 min-w-0 active:scale-98 shadow-xl ${
+                allStepsCompleted
+                  ? 'bg-emerald-400 hover:bg-emerald-300 text-black shadow-emerald-500/20 animate-pulse'
+                  : 'bg-white hover:bg-neutral-200 text-black shadow-white/10'
+              }`}
+            >
+              <Check className="w-5 h-5 stroke-[3] shrink-0" />
+              <span className="truncate">
+                Dokončit úkol (+{activeTask.xpReward || 50} XP)
+              </span>
+            </button>
+          </div>
+        </section>
       )}
 
       {/* ========================================================================= */}
-      {/* 2. UP NEXT STACK (Bottom ~40% Continuous Queue Preview) */}
+      {/* MODAL: VYMĚNIT ÚKOL (Zásobník na pozadí přístupný pouze na vyžádání)     */}
       {/* ========================================================================= */}
-      <section
-        aria-label="Up Next Autopilot Stack"
-        className="bg-slate-900/75 backdrop-blur-md border border-slate-800/80 rounded-3xl p-4 sm:p-5 space-y-3"
-      >
-        {/* Queue Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Layers className="w-4 h-4 text-amber-400" />
-            <h3 className="text-xs font-black uppercase tracking-wider text-slate-200">
-              Další na řadě v autopilotu
-            </h3>
-          </div>
-          <span className="text-[11px] font-bold text-slate-400 bg-slate-800 px-2 py-0.5 rounded-full border border-slate-700">
-            {upNextTasks.length} ve frontě
-          </span>
-        </div>
-
-        {/* Up Next List Preview */}
-        {upNextTasks.length === 0 ? (
-          <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800/80 text-center space-y-2">
-            <p className="text-xs font-bold text-slate-400">
-              Po tomto úkolu je fronta prázdná! Přidej nové myšlenky nebo pokračuj v tempu.
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {upNextTasks.slice(0, 3).map((task, idx) => (
-              <div
-                key={task.id}
-                onClick={() => {
-                  onPlayClick();
-                  onSelectTask(task.id);
-                }}
-                className="group flex items-center justify-between gap-3 p-3 rounded-2xl bg-slate-950/80 hover:bg-slate-950 border border-slate-800/80 hover:border-amber-500/40 cursor-pointer transition-all active:scale-99"
-              >
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <span className="w-5 h-5 rounded-lg bg-slate-800 text-slate-400 group-hover:bg-amber-500/20 group-hover:text-amber-300 text-[10px] font-black flex items-center justify-center shrink-0 border border-slate-700 transition-colors">
-                    {idx + 1}
-                  </span>
-                  <div className="min-w-0 flex items-center gap-1.5">
-                    <span className="text-xs font-bold text-slate-200 group-hover:text-white truncate">
-                      {task.title}
-                    </span>
-                    {task.isDeadlinePromoted && (
-                      <span className="px-1.5 py-0.2 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30 text-[9px] font-black shrink-0">
-                        Termín
-                      </span>
-                    )}
-                    {task.person && (
-                      <span className="px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-[9px] font-bold shrink-0">
-                        {task.person}
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 shrink-0">
-                  <span
-                    className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase border ${
-                      task.energyLevel === 'low'
-                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                        : task.energyLevel === 'medium'
-                        ? 'bg-blue-500/10 text-blue-400 border-blue-500/20'
-                        : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                    }`}
-                  >
-                    {task.estimatedMinutes}m
-                  </span>
-                  <ArrowUpRight className="w-3.5 h-3.5 text-slate-500 group-hover:text-amber-400 transition-colors" />
-                </div>
+      {isSwapModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-neutral-950 border-2 border-neutral-800 rounded-3xl p-5 sm:p-6 w-full max-w-lg space-y-4 shadow-2xl animate-fadeIn">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-neutral-800 pb-3">
+              <div className="flex items-center gap-2">
+                <Layers className="w-4 h-4 text-amber-400" />
+                <h3 className="text-sm font-mono font-black uppercase text-white tracking-wider">
+                  Vyměnit aktivní úkol
+                </h3>
               </div>
-            ))}
-          </div>
-        )}
+              <button
+                type="button"
+                onClick={() => setIsSwapModalOpen(false)}
+                className="p-1 rounded-xl text-neutral-400 hover:text-white hover:bg-neutral-900 transition-all"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
 
-        {/* Quick Add to Queue Input */}
-        <form onSubmit={handleQuickAddSubmit} className="flex gap-2 pt-1">
-          <input
-            type="text"
-            value={quickInput}
-            onChange={(e) => setQuickInput(e.target.value)}
-            placeholder="+ Rychle přidat myšlenku do fronty..."
-            className="flex-1 bg-slate-950 border border-slate-800/90 rounded-2xl px-3.5 py-2.5 text-xs text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-amber-500 transition-colors"
-          />
-          <button
-            type="submit"
-            disabled={!quickInput.trim()}
-            className="px-3.5 py-2.5 bg-slate-800 hover:bg-slate-750 text-slate-200 rounded-2xl text-xs font-bold transition-all disabled:opacity-40"
-          >
-            <Plus className="w-4 h-4" />
-          </button>
-        </form>
-      </section>
+            {/* Task list in queue */}
+            <div className="space-y-2 max-h-72 overflow-y-auto custom-scrollbar pr-1">
+              {upNextTasks.length === 0 ? (
+                <div className="p-4 rounded-2xl bg-neutral-900 border border-neutral-800 text-center space-y-1">
+                  <p className="text-xs font-mono text-neutral-400">
+                    V zásobníku nejsou žádné další úkoly.
+                  </p>
+                </div>
+              ) : (
+                upNextTasks.map((task, idx) => (
+                  <button
+                    key={task.id}
+                    type="button"
+                    onClick={() => {
+                      onPlayClick();
+                      onSelectTask(task.id);
+                      setIsSwapModalOpen(false);
+                    }}
+                    className="w-full text-left p-3.5 rounded-2xl bg-neutral-900 hover:bg-neutral-850 border border-neutral-800 hover:border-neutral-700 transition-all flex items-center justify-between gap-3 group active:scale-[0.99]"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className="w-6 h-6 rounded-lg bg-neutral-800 text-neutral-400 group-hover:text-white text-xs font-mono font-bold flex items-center justify-center shrink-0 border border-neutral-700">
+                        {idx + 1}
+                      </span>
+                      <span className="text-sm font-bold text-neutral-200 group-hover:text-white truncate">
+                        {task.title}
+                      </span>
+                    </div>
+
+                    <span className="text-xs font-mono text-amber-400 group-hover:translate-x-0.5 transition-transform flex items-center gap-1 shrink-0">
+                      Aktivovat <ArrowRight className="w-3.5 h-3.5" />
+                    </span>
+                  </button>
+                ))
+              )}
+            </div>
+
+            {/* Quick add new task to queue form inside modal */}
+            <form onSubmit={handleQuickAddInsideModal} className="flex gap-2 pt-2 border-t border-neutral-900">
+              <input
+                type="text"
+                value={quickInput}
+                onChange={(e) => setQuickInput(e.target.value)}
+                placeholder="+ Přidat jiný úkol do zásobníku..."
+                className="flex-1 bg-neutral-900 border border-neutral-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder:text-neutral-500 focus:outline-none focus:border-amber-400 font-medium"
+              />
+              <button
+                type="submit"
+                disabled={!quickInput.trim()}
+                className="px-4 py-2.5 bg-neutral-800 hover:bg-neutral-700 text-white rounded-xl text-xs font-mono font-bold transition-all disabled:opacity-40"
+              >
+                Přidat
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
-

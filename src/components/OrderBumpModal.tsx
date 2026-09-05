@@ -16,7 +16,7 @@ export const OrderBumpModal: React.FC<OrderBumpModalProps> = ({ isOpen, onClose 
 
   const handleCheckout = (productKeyOverride?: 'base' | 'base_with_vault') => {
     const selectedProduct = productKeyOverride || (includeBump ? 'base_with_vault' : 'base');
-    const totalAmount = selectedProduct === 'base_with_vault' ? 44 : 27;
+    const totalAmount = selectedProduct === 'base_with_vault' ? 537 : 390;
     setLoading(true);
     setErrorMsg(null);
 
@@ -44,7 +44,7 @@ export const OrderBumpModal: React.FC<OrderBumpModalProps> = ({ isOpen, onClose 
     window.location.href = redirectUrl;
   };
 
-  const currentTotal = includeBump ? 44 : 27;
+  const currentTotal = includeBump ? 537 : 390;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-fadeIn">
@@ -90,7 +90,7 @@ export const OrderBumpModal: React.FC<OrderBumpModalProps> = ({ isOpen, onClose 
               <p className="text-[11px] text-slate-400">Úkoly podle energie, XP, Výsyp hlavy</p>
             </div>
           </div>
-          <span className="text-base font-black text-amber-400">$27</span>
+          <span className="text-base font-black text-amber-400">390 Kč</span>
         </div>
 
         {/* Order Bump Card (Emerald Green Border) */}
@@ -117,7 +117,7 @@ export const OrderBumpModal: React.FC<OrderBumpModalProps> = ({ isOpen, onClose 
             <div className="flex-1">
               <div className="flex items-center justify-between gap-2">
                 <span className="text-xs sm:text-sm font-bold text-emerald-300 leading-snug">
-                  Přidat: ADHD Prompt Vault — 50 AI promptů (+$17)
+                  Přidat: ADHD Prompt Trezor — 50 AI promptů (+147 Kč)
                 </span>
               </div>
 
@@ -145,7 +145,7 @@ export const OrderBumpModal: React.FC<OrderBumpModalProps> = ({ isOpen, onClose 
           <span className="text-xs font-semibold text-slate-400">Dnes celkem:</span>
           <div className="text-right">
             <span className="text-lg sm:text-xl font-black text-amber-400">
-              ${currentTotal} <span className="text-xs text-slate-400 font-normal">jednorázově</span>
+              {currentTotal} Kč <span className="text-xs text-slate-400 font-normal">jednorázově</span>
             </span>
           </div>
         </div>
@@ -170,7 +170,7 @@ export const OrderBumpModal: React.FC<OrderBumpModalProps> = ({ isOpen, onClose 
           ) : (
             <>
               <Lock className="w-4 h-4" />
-              <span>Dokončit nákup — ${currentTotal} →</span>
+              <span>Dokončit nákup — {currentTotal} Kč →</span>
             </>
           )}
         </button>
@@ -182,7 +182,7 @@ export const OrderBumpModal: React.FC<OrderBumpModalProps> = ({ isOpen, onClose 
             disabled={loading}
             className="text-xs text-slate-400 hover:text-slate-200 underline underline-offset-4 transition-colors"
           >
-            Ne, díky, chci jen Dopamine OS za $27
+            Ne, díky, chci jen Dopamine OS za 390 Kč
           </button>
         </div>
 

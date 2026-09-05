@@ -8,6 +8,7 @@ import {
   BatteryCharging,
   Layers,
   CheckCircle2,
+  Check,
   X,
   Flame,
   Bot,
@@ -63,6 +64,9 @@ export const MorningNavigator: React.FC<MorningNavigatorProps> = ({
   const [stepView, setStepView] = useState<'input' | 'synthesis'>('input');
   const [warmUpTask, setWarmUpTask] = useState<string>('');
   const [detectedLoops, setDetectedLoops] = useState<Array<{ title: string; person?: string; dueDate?: string }>>([]);
+  const [isSwapModalOpen, setIsSwapModalOpen] = useState<boolean>(false);
+  const [completedStepIndices, setCompletedStepIndices] = useState<number[]>([]);
+  const [recentCelebrationIndex, setRecentCelebrationIndex] = useState<number | null>(null);
 
   const activeLoops = openLoops.filter((l) => l.status === 'open');
 
@@ -139,17 +143,18 @@ export const MorningNavigator: React.FC<MorningNavigatorProps> = ({
     const triaged = autoTriageRawInput(text, modeConfigs[mode].capacity);
 
     const primary = triaged.needleMover[0]?.title || triaged.orderedTasks[0]?.title || text;
-    const warmUp = triaged.warmUp[0]?.title || '';
     
     // Remaining items go into background orbital stash
     const remaining: string[] = [];
-    if (triaged.warmUp.length > 1) {
-      remaining.push(...triaged.warmUp.slice(1).map((t) => t.title));
-    }
-    if (triaged.needleMover.length > 1) {
-      remaining.push(...triaged.needleMover.slice(1).map((t) => t.title));
-    }
-    remaining.push(...triaged.maintenance.map((t) => t.title));
+    triaged.warmUp.forEach((t) => {
+      if (t.title !== primary) remaining.push(t.title);
+    });
+    triaged.needleMover.forEach((t) => {
+      if (t.title !== primary) remaining.push(t.title);
+    });
+    triaged.maintenance.forEach((t) => {
+      if (t.title !== primary) remaining.push(t.title);
+    });
 
     // Extract Open Loops from dump lines
     const allLines = text.split(/[\n,;]+/).map((l) => l.trim()).filter(Boolean);
@@ -173,8 +178,9 @@ export const MorningNavigator: React.FC<MorningNavigatorProps> = ({
     }
 
     setPrimaryTask(primary);
-    setWarmUpTask(warmUp);
+    setWarmUpTask('');
     setOrbitalStash(remaining);
+    setCompletedStepIndices([]);
     setStepView('synthesis');
 
     // Run Gemini LLM Decomposer on the #1 Needle Mover
@@ -218,6 +224,7 @@ export const MorningNavigator: React.FC<MorningNavigatorProps> = ({
     const newStash = [primaryTask, ...orbitalStash.filter((_, i) => i !== index)];
     setPrimaryTask(selected);
     setOrbitalStash(newStash);
+    setCompletedStepIndices([]);
 
     setIsDecomposing(true);
     try {
@@ -234,9 +241,9 @@ export const MorningNavigator: React.FC<MorningNavigatorProps> = ({
       decomposed && decomposed.steps.length > 0
         ? decomposed.steps
         : [
-            'Otevři nástroj nebo soubor pro rozjezd',
-            'Udělej 60 sekund hrubé přípravy bez hodnocení',
-            'Soustřeď se na 2 nepřerušované minuty',
+            'Otevři potřebný program',
+            'Napiš první slovo',
+            'Dokonči první detail',
           ];
 
     const finalPrimaryTask = primaryTask.trim() || 'Hlavní cíl pro dnešek';
@@ -526,7 +533,7 @@ export const MorningNavigator: React.FC<MorningNavigatorProps> = ({
           ) : (
             /* Synthesis & Needle Mover Review */
             <div className="w-full flex-1 flex flex-col justify-between gap-3 animate-fadeIn box-border">
-              <div className="w-full space-y-3 box-border">
+              <div className="w-full space-y-4 box-border">
                 {/* Detected Open Loops notification */}
                 {detectedLoops.length > 0 && (
                   <div className="p-2.5 rounded-2xl bg-indigo-950/40 border border-indigo-500/30 text-xs text-indigo-200 flex items-center gap-2 w-full box-border">
@@ -537,129 +544,205 @@ export const MorningNavigator: React.FC<MorningNavigatorProps> = ({
                   </div>
                 )}
 
-                {/* Warm-Up Task (Optional Quick Starter) */}
-                {warmUpTask && (
-                  <div className="p-2.5 rounded-2xl bg-emerald-950/30 border border-emerald-500/30 space-y-1 w-full box-border">
-                    <div className="flex items-center gap-1.5 text-emerald-400 text-[10px] font-black uppercase tracking-wider">
-                      <Zap className="w-3 h-3 shrink-0" />
-                      <span>Rychlý startér na rozehřátí (2 minuty pro rozjezd)</span>
-                    </div>
-                    <div className="text-xs font-bold text-slate-200 break-words">{warmUpTask}</div>
-                  </div>
-                )}
-
-                {/* The #1 Needle Mover (Primary Target) */}
-                <div className="p-3.5 bg-slate-950/90 rounded-2xl border-2 border-amber-500/60 space-y-2 relative w-full box-border">
-                  <div className="flex items-center justify-between gap-1 w-full">
-                    <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-black uppercase tracking-wider border border-amber-500/30 flex items-center gap-1 shrink-0">
+                {/* The #1 Dominant Target (Focus Mode - Brutalist Dark) */}
+                <div className="p-4 sm:p-5 bg-black rounded-3xl border-2 border-neutral-800 space-y-3 relative w-full box-border shadow-2xl">
+                  <div className="flex items-center justify-between gap-1 w-full border-b border-neutral-900 pb-2.5">
+                    <span className="px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-300 text-[10px] font-black uppercase tracking-wider border border-amber-500/30 flex items-center gap-1 shrink-0">
                       <Flame className="w-2.5 h-2.5 fill-current" />
-                      #1 Zásadní úkol dne
+                      #1 Aktivní úkol
                     </span>
-                    <span className="text-[10px] text-slate-400 font-bold shrink-0">+50 XP</span>
+                    <span className="text-xs font-mono text-amber-400 font-bold shrink-0">+50 XP</span>
                   </div>
 
-                  <h3 className="text-sm sm:text-base font-black text-slate-100 leading-snug break-words">
-                    {primaryTask}
-                  </h3>
+                  <div className="space-y-2">
+                    <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-white uppercase tracking-tight leading-tight select-text break-words">
+                      {primaryTask}
+                    </h2>
 
-                  {/* Decomposed Micro-Steps Preview */}
-                  <div className="pt-2 border-t border-slate-800/80 space-y-2 w-full box-border">
+                    {/* Discreet Swap Task Button */}
+                    {orbitalStash.length > 0 && (
+                      <div className="pt-0.5">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            onPlayClick();
+                            setIsSwapModalOpen(true);
+                          }}
+                          className="text-xs font-mono font-bold text-neutral-400 hover:text-white underline underline-offset-4 decoration-neutral-700 hover:decoration-white transition-colors cursor-pointer inline-flex items-center gap-1.5"
+                        >
+                          <Layers className="w-3.5 h-3.5" />
+                          <span>Vyměnit úkol ({orbitalStash.length})</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 3 Interactive Micro-Steps (Gamified Clickable Buttons) */}
+                  <div className="pt-3 border-t border-neutral-800/90 space-y-2.5 w-full box-border">
                     <div className="flex items-center justify-between text-xs w-full gap-1">
-                      <span className="text-slate-400 font-bold flex items-center gap-1 text-[11px] truncate">
+                      <span className="text-neutral-400 font-bold flex items-center gap-1 text-[11px] font-mono uppercase tracking-wider truncate">
                         <Bot className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                        <span>3 fyzické mikro-kroky &lt;2 min:</span>
+                        <span>3 fyzické mikro-kroky (&lt;10s):</span>
                       </span>
                       <button
                         type="button"
                         onClick={handleRegenerateSteps}
                         disabled={isDecomposing}
-                        className="text-[10px] text-amber-400 hover:text-amber-300 font-bold flex items-center gap-1 disabled:opacity-50 shrink-0"
+                        className="text-xs font-mono font-bold text-neutral-400 hover:text-amber-400 flex items-center gap-1.5 disabled:opacity-50 px-2 py-1 rounded-lg hover:bg-neutral-900 border border-transparent hover:border-neutral-800 transition-colors shrink-0"
+                        title="Záchranná brzda: Vygenerovat jiné kroky"
                       >
-                        <RefreshCw className={`w-3 h-3 ${isDecomposing ? 'animate-spin' : ''}`} />
-                        <span>Přegenerovat</span>
+                        <RefreshCw className={`w-3.5 h-3.5 ${isDecomposing ? 'animate-spin text-amber-400' : ''}`} />
+                        <span>{isDecomposing ? 'Rozsekávám...' : 'Přegenerovat'}</span>
                       </button>
                     </div>
 
                     {isDecomposing ? (
-                      <div className="py-3 text-center space-y-1.5">
-                        <Sparkles className="w-4 h-4 text-amber-400 mx-auto animate-bounce" />
-                        <p className="text-xs text-amber-400 font-bold">
-                          Rozsekávám na mikro-kroky bez tření...
+                      <div className="py-6 text-center space-y-2 bg-neutral-900/60 rounded-2xl border border-neutral-800">
+                        <Sparkles className="w-5 h-5 text-amber-400 mx-auto animate-bounce" />
+                        <p className="text-xs text-amber-400 font-mono font-bold">
+                          Rozsekávám na 3 fyzické mikro-kroky...
                         </p>
                       </div>
                     ) : (
-                      <div className="space-y-1.5 w-full box-border">
+                      <div className="space-y-2 w-full box-border">
                         {(decomposed?.steps || [
-                          'Otevři nástroj nebo soubor pro start',
-                          'Udělej 60 sekund hrubé přípravy',
-                          'Soustřeď se na 2 nepřerušované minuty',
-                        ]).map((step, idx) => (
-                          <div
-                            key={idx}
-                            className="flex items-start gap-2 p-2 rounded-xl bg-slate-900 border border-slate-800 text-xs w-full box-border"
-                          >
-                            <span className="w-4 h-4 rounded bg-amber-500/20 text-amber-300 font-black text-[10px] flex items-center justify-center shrink-0 mt-0.5">
-                              {idx + 1}
-                            </span>
-                            <span className="text-slate-200 font-medium break-words flex-1 leading-snug">
-                              {step}
-                            </span>
-                          </div>
-                        ))}
+                          'Otevři potřebný program',
+                          'Napiš první slovo',
+                          'Dokonči první detail',
+                        ]).map((step, idx) => {
+                          const isDone = completedStepIndices.includes(idx);
+                          const isCelebrating = recentCelebrationIndex === idx;
+
+                          return (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={() => {
+                                onPlayClick();
+                                const isNowDone = !isDone;
+                                if (isNowDone) {
+                                  setCompletedStepIndices((prev) => [...prev, idx]);
+                                  setRecentCelebrationIndex(idx);
+                                  setTimeout(() => setRecentCelebrationIndex(null), 1600);
+                                } else {
+                                  setCompletedStepIndices((prev) => prev.filter((i) => i !== idx));
+                                }
+                              }}
+                              className={`w-full p-3.5 sm:p-4 rounded-2xl border-2 flex items-center justify-between text-left gap-3 transition-all duration-150 active:scale-[0.99] select-none box-border ${
+                                isDone
+                                  ? 'bg-emerald-600 border-emerald-400 text-white shadow-lg shadow-emerald-950/40'
+                                  : 'bg-neutral-900 hover:bg-neutral-850 border-neutral-800 hover:border-neutral-700 text-neutral-100'
+                              }`}
+                            >
+                              <div className="flex items-center gap-3 min-w-0 flex-1">
+                                <div
+                                  className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 border-2 transition-all ${
+                                    isDone
+                                      ? 'bg-white border-white text-emerald-700 font-black'
+                                      : 'border-neutral-600 bg-neutral-800 text-neutral-400 font-mono text-xs font-black'
+                                  }`}
+                                >
+                                  {isDone ? <Check className="w-3.5 h-3.5 stroke-[3.5]" /> : idx + 1}
+                                </div>
+                                <span
+                                  className={`text-sm sm:text-base font-bold leading-snug break-words ${
+                                    isDone ? 'line-through opacity-90 text-white' : 'text-white'
+                                  }`}
+                                >
+                                  {step}
+                                </span>
+                              </div>
+
+                              {isDone ? (
+                                <span
+                                  className={`px-2.5 py-0.5 rounded-lg bg-emerald-500 text-white text-[11px] font-black uppercase tracking-wider shrink-0 transition-all ${
+                                    isCelebrating ? 'scale-110 ring-2 ring-white/50' : ''
+                                  }`}
+                                >
+                                  +10 XP
+                                </span>
+                              ) : (
+                                <span className="text-[10px] font-mono text-neutral-500 uppercase tracking-wider shrink-0 px-2 py-0.5 rounded bg-neutral-800 border border-neutral-700">
+                                  Klikni
+                                </span>
+                              )}
+                            </button>
+                          );
+                        })}
                       </div>
                     )}
                   </div>
                 </div>
-
-                {/* Orbital Stash (Remaining Tasks) */}
-                {orbitalStash.length > 0 && (
-                  <div className="p-2.5 bg-slate-950/60 rounded-2xl border border-slate-800 space-y-1.5 w-full box-border">
-                    <div className="flex items-center justify-between text-xs w-full gap-1">
-                      <span className="font-bold text-slate-400 flex items-center gap-1 text-[11px] truncate">
-                        <Layers className="w-3 h-3 text-slate-500 shrink-0" />
-                        <span>Zásobník na pozadí ({orbitalStash.length}):</span>
-                      </span>
-                      <span className="text-[9px] text-slate-500 shrink-0">Kliknutím prohodíš</span>
-                    </div>
-                    <div className="space-y-1 max-h-24 overflow-y-auto custom-scrollbar pr-0.5 w-full box-border">
-                      {orbitalStash.map((item, idx) => (
-                        <button
-                          key={idx}
-                          type="button"
-                          onClick={() => handleSelectPrimaryFromStash(idx)}
-                          className="w-full text-left p-1.5 rounded-xl bg-slate-900/80 hover:bg-slate-900 border border-slate-800/80 hover:border-amber-500/40 text-xs text-slate-300 flex items-center justify-between transition-all group box-border gap-1"
-                        >
-                          <span className="truncate group-hover:text-amber-300 font-medium flex-1">
-                            {item}
-                          </span>
-                          <span className="text-[9px] text-slate-500 group-hover:text-amber-400 font-bold shrink-0 ml-1">
-                            Vyměnit →
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </div>
 
               {/* Launch Actions (Sticky bottom bar) */}
-              <div className="sticky bottom-0 pt-2 pb-2 sm:pb-0 bg-gradient-to-t from-slate-900 via-slate-900/95 to-transparent w-full box-border z-10 flex gap-2">
+              <div className="sticky bottom-0 pt-3 pb-2 sm:pb-0 bg-gradient-to-t from-black via-black/95 to-transparent w-full box-border z-10 flex gap-2">
                 <button
                   type="button"
                   onClick={() => setStepView('input')}
-                  className="px-3.5 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs rounded-2xl transition-all shrink-0"
+                  className="px-4 py-3.5 bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 text-neutral-300 font-mono font-bold text-xs rounded-2xl transition-all shrink-0"
                 >
                   Zpět
                 </button>
                 <button
                   type="button"
                   onClick={handleFinalLaunch}
-                  className="flex-1 py-3 px-4 bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-400 text-slate-950 font-black text-xs uppercase tracking-wider rounded-2xl shadow-xl shadow-amber-500/20 hover:brightness-110 active:scale-98 transition-all flex items-center justify-center gap-2 box-border truncate"
+                  className="flex-1 py-3.5 px-4 bg-white hover:bg-neutral-200 text-black font-black text-xs uppercase tracking-wider rounded-2xl shadow-xl transition-all flex items-center justify-center gap-2 box-border truncate active:scale-98"
                 >
                   <span className="truncate">Spustit autopilota úkolů</span>
-                  <ArrowRight className="w-3.5 h-3.5 stroke-[3] shrink-0" />
+                  <ArrowRight className="w-4 h-4 stroke-[3] shrink-0" />
                 </button>
               </div>
+
+              {/* Modal / Dropdown: Vyměnit úkol ze zásobníku */}
+              {isSwapModalOpen && (
+                <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4">
+                  <div className="bg-neutral-950 border-2 border-neutral-800 rounded-3xl p-5 sm:p-6 w-full max-w-lg space-y-4 shadow-2xl animate-fadeIn">
+                    <div className="flex items-center justify-between border-b border-neutral-800 pb-3">
+                      <div className="flex items-center gap-2">
+                        <Layers className="w-4 h-4 text-amber-400" />
+                        <h3 className="text-sm font-mono font-black uppercase text-white tracking-wider">
+                          Vyměnit aktivní úkol
+                        </h3>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setIsSwapModalOpen(false)}
+                        className="p-1 rounded-xl text-neutral-400 hover:text-white hover:bg-neutral-900 transition-all"
+                      >
+                        <X className="w-5 h-5" />
+                      </button>
+                    </div>
+
+                    <div className="space-y-2 max-h-72 overflow-y-auto custom-scrollbar pr-1">
+                      {orbitalStash.length === 0 ? (
+                        <p className="text-xs font-mono text-neutral-400 py-3 text-center">
+                          V zásobníku nejsou žádné další úkoly.
+                        </p>
+                      ) : (
+                        orbitalStash.map((item, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => {
+                              handleSelectPrimaryFromStash(idx);
+                              setIsSwapModalOpen(false);
+                            }}
+                            className="w-full text-left p-3.5 rounded-2xl bg-neutral-900 hover:bg-neutral-850 border border-neutral-800 hover:border-neutral-700 transition-all flex items-center justify-between gap-3 group active:scale-[0.99]"
+                          >
+                            <span className="text-sm font-bold text-neutral-200 group-hover:text-white truncate">
+                              {item}
+                            </span>
+                            <span className="text-xs font-mono text-amber-400 group-hover:translate-x-0.5 transition-transform flex items-center gap-1 shrink-0">
+                              Aktivovat <ArrowRight className="w-3.5 h-3.5" />
+                            </span>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>

@@ -146,7 +146,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigateToApp, onNavigat
               onClick={onNavigateToSalesPage}
               className="text-xs font-bold text-amber-400 hover:text-amber-300 underline underline-offset-4"
             >
-              Získat celoživotní přístup za 27 $ →
+              Získat celoživotní přístup za 390 Kč →
             </button>
           </div>
         </div>

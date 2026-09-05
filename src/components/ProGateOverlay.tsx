@@ -18,7 +18,7 @@ export const ProGateOverlay: React.FC<ProGateOverlayProps> = ({
   children,
   onUnlock,
   featureTag = 'PRO FUNKCE',
-  priceText = 'Odemknout plný přístup ($27)',
+  priceText = 'Odemknout plný přístup (390 Kč)',
 }) => {
   if (isPro) {
     return <>{children}</>;

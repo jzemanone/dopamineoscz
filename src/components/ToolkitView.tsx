@@ -589,22 +589,22 @@ export const ToolkitView: React.FC<ToolkitProps> = ({
 
                 <div>
                   <label className="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1">
-                    Cena (Kč / $)
+                    Cena (Kč)
                   </label>
                   <div className="relative">
-                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">
-                      $
-                    </span>
                     <input
                       type="number"
                       min="1"
                       step="any"
                       value={pausePrice}
                       onChange={(e) => setPausePrice(e.target.value)}
-                      placeholder="89"
-                      className="w-full pl-7 pr-3.5 py-2.5 rounded-xl bg-slate-950/80 border border-slate-750 text-slate-100 placeholder-slate-500 text-xs sm:text-sm focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400 transition-all"
+                      placeholder="490"
+                      className="w-full pl-3.5 pr-10 py-2.5 rounded-xl bg-slate-950/80 border border-slate-750 text-slate-100 placeholder-slate-500 text-xs sm:text-sm focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400 transition-all"
                       required
                     />
+                    <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">
+                      Kč
+                    </span>
                   </div>
                 </div>
               </div>
@@ -659,7 +659,7 @@ export const ToolkitView: React.FC<ToolkitProps> = ({
                             {pause.itemName}
                           </h5>
                           <span className="text-xs font-bold text-amber-300">
-                            ${pause.cost.toLocaleString()}
+                            {pause.cost.toLocaleString()} Kč
                           </span>
                         </div>
 
@@ -687,7 +687,7 @@ export const ToolkitView: React.FC<ToolkitProps> = ({
                           className="py-2.5 px-3 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 text-emerald-300 font-bold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
-                          <span className="truncate">🗑️ Nekoupeno (ušetřeno ${pause.cost})</span>
+                          <span className="truncate">🗑️ Nekoupeno (ušetřeno {pause.cost} Kč)</span>
                         </button>
 
                         <button
@@ -724,11 +724,11 @@ export const ToolkitView: React.FC<ToolkitProps> = ({
                       </span>
                       {p.outcome === 'skipped' ? (
                         <span className="text-emerald-400 font-bold">
-                          Ušetřeno ${p.cost}
+                          Ušetřeno {p.cost} Kč
                         </span>
                       ) : (
                         <span className="text-slate-400 font-medium">
-                          Koupeno (${p.cost})
+                          Koupeno ({p.cost} Kč)
                         </span>
                       )}
                     </div>

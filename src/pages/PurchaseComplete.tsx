@@ -35,7 +35,7 @@ export const PurchaseComplete: React.FC<PurchaseCompleteProps> = ({
     productKey === 'base_with_vault' ||
     urlParams.get('vault') === 'true';
 
-  const totalPaid = isBumpActive ? 44 : 27;
+  const totalPaid = isBumpActive ? 537 : 390;
 
   useEffect(() => {
     // 1. Immediately trigger Pro activation and access grant
@@ -120,12 +120,12 @@ export const PurchaseComplete: React.FC<PurchaseCompleteProps> = ({
                 <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
                 <span>Bonus odemčen</span>
               </span>
-              <span className="text-xs font-bold text-emerald-400">HODNOTA $17</span>
+              <span className="text-xs font-bold text-emerald-400">HODNOTA 147 Kč</span>
             </div>
 
             <h3 className="text-lg font-black text-slate-100 mb-1 flex items-center gap-2">
               <FileText className="w-5 h-5 text-emerald-400 shrink-0" />
-              <span>ADHD AI Prompt Vault</span>
+              <span>ADHD AI Prompt Trezor</span>
             </h3>
             <p className="text-xs text-slate-300 mb-4 leading-relaxed">
               50 praktických hotových AI promptů navržených speciálně k prolomení paralýzy, nerozhodnosti u jídla a emočního přehlcení.
@@ -191,7 +191,7 @@ export const PurchaseComplete: React.FC<PurchaseCompleteProps> = ({
             <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400">
               Potvrzení objednávky
             </span>
-            <span className="text-emerald-400 font-black text-sm">${totalPaid} zaplaceno celkem</span>
+            <span className="text-emerald-400 font-black text-sm">{totalPaid} Kč zaplaceno celkem</span>
           </div>
 
           <div className="space-y-2.5 text-xs sm:text-sm">
@@ -199,16 +199,16 @@ export const PurchaseComplete: React.FC<PurchaseCompleteProps> = ({
               <span className="font-semibold text-slate-200">
                 ⚡ Dopamine OS doživotní licence
               </span>
-              <span className="font-bold text-amber-400">$27</span>
+              <span className="font-bold text-amber-400">390 Kč</span>
             </div>
 
             {isBumpActive && (
               <div className="flex justify-between items-center pt-2 border-t border-slate-800/80">
                 <div className="flex items-center gap-1.5 text-emerald-300 font-semibold">
                   <FileText className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>ADHD AI Prompt Vault (50 promptů)</span>
+                  <span>ADHD AI Prompt Trezor (50 promptů)</span>
                 </div>
-                <span className="font-bold text-emerald-400">$17</span>
+                <span className="font-bold text-emerald-400">147 Kč</span>
               </div>
             )}
           </div>

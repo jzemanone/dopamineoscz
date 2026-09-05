@@ -60,9 +60,9 @@ const HEURISTIC_PATTERNS: HeuristicPattern[] = [
     regex: /\b(fuel|eat|food|snack|cook|kitchen|apple|protein|meal|lunch|breakfast|dinner|shake|yogurt|coffee|tea|water|jídlo|vařit|oběd|večeře|snídaně|svačina)\b/i,
     category: 'fuel',
     steps: [
-      'Zvedni se a jdi rovnou do kuchyně k lince nebo lednici',
-      'Vyndej první surovinu a vezmi talíř, misku nebo pánev',
-      'Začni první pohyb přípravy nebo si dej první sousto',
+      'Jdi do kuchyně k lednici',
+      'Vyndej talíř a jídlo',
+      'Dej si první sousto',
     ],
   },
   {
@@ -94,9 +94,9 @@ const HEURISTIC_PATTERNS: HeuristicPattern[] = [
     regex: /\b(tidy|clean|wash|laundry|dishes|apartment|room|trash|bed|shower|vacuum|mop|prát|vyprat|uklidit|úklid|nádobí|odpadky|vyluxovat|koupelna|ustlat|vytřít)\b/i,
     category: 'physical',
     steps: [
-      'Hned se zvedni a jdi přímo do cílové místnosti',
-      'Zvedni nebo ukliď první 3 věci ze stolu nebo podlahy',
-      'Nastav 2minutový časovač na úklid jen téhle jedné plochy',
+      'Jdi do místnosti',
+      'Zvedni první 3 věci',
+      'Dej je na místo',
     ],
   },
   {
@@ -125,9 +125,9 @@ const HEURISTIC_PATTERNS: HeuristicPattern[] = [
     regex: /\b(gym|workout|train|walk|run|running|fitness|exercise|stretch|weights|yoga|posilovna|cvičení|cvičit|běhat|běh|protáhnout|kolo|jóga)\b/i,
     category: 'physical',
     steps: [
-      'Obuj si boty na cvičení nebo roztáhni podložku hned teď',
-      'Napusť si lahev s vodou a pusť si jeden energický track',
-      'Začni 30 sekundami lehkého rozhýbání na prolomení setrvačnosti',
+      'Obuj si sportovní boty',
+      'Napusť láhev s vodou',
+      'Udělej první cvik',
     ],
   },
   {
@@ -154,9 +154,9 @@ const HEURISTIC_PATTERNS: HeuristicPattern[] = [
     regex: /\b(invoice|pay|bank|tax|taxes|bill|document|form|faktura|zaplatit|platba|účet|úřad|daň|daně|pojištění|smlouva)\b/i,
     category: 'admin',
     steps: [
-      'Přihlas se do jednoho potřebného portálu nebo otevři formulář',
-      'Najdi otevřenou položku nebo vyplň jediný první řádek',
-      'Odešli nebo potvrď platbu bez zbytečného přemýšlení',
+      'Otevři internetové bankovnictví',
+      'Klikni na nová platba',
+      'Vyplň částku a odešli',
     ],
   },
   {
@@ -186,9 +186,9 @@ const HEURISTIC_PATTERNS: HeuristicPattern[] = [
     regex: /\b(email|mail|reply|dm|pitch|outreach|proposal|proposals|call|text|message|client|zavolat|napsat|odepsat|klient|nabídka|poptávka|telefon|dopis)\b/i,
     category: 'digital',
     steps: [
-      'Otevři konverzaci nebo čistý koncept (zavři všechny ostatní panely)',
-      'Napiš syrovou 1 větu bez autocenzury nebo opravování',
-      'Klikni na odeslat nebo naplánuj odeslání hned teď',
+      'Otevři e-mailovou aplikaci',
+      'Klikni na nová zpráva',
+      'Napiš příjemce a první větu',
     ],
   },
   {
@@ -221,9 +221,9 @@ const HEURISTIC_PATTERNS: HeuristicPattern[] = [
     regex: /\b(code|coding|dev|bug|feature|script|git|build|app|design|write|article|draft|doc|typescript|css|api|program|kódovat|programovat|opravit|vyvíjet|aplikace)\b/i,
     category: 'digital',
     steps: [
-      'Otevři konkrétní cílový soubor nebo dokument a sbal boční panely',
-      'Napiš 1 hrubý řádek kódu, testovací komentář nebo první větu',
-      'Soustřeď se nerušeně na první 2 zkušební minuty',
+      'Otevři editor kódu',
+      'Napiš první řádek',
+      'Ulož soubor',
     ],
   },
 ];
@@ -275,9 +275,9 @@ export function getLocalHeuristicDecomposition(
     if (detectedCategory === 'fuel') {
       return {
         steps: [
-          'Vypij hned teď 1 sklenici studené vody (10 s)',
-          'Dojdi do kuchyně a sáhni na 1 jídlo nebo svačinu (10 s)',
-          'Dej si 1 sousto bez jakéhokoliv tlaku na dojezení (10 s)',
+          'Vypij sklenici vody',
+          'Vezmi do ruky jídlo',
+          'Dej si první sousto',
         ],
         category: 'fuel',
         source: 'heuristic_fallback',
@@ -286,9 +286,9 @@ export function getLocalHeuristicDecomposition(
     if (detectedCategory === 'chore' || detectedCategory === 'physical') {
       return {
         steps: [
-          'Fyzicky vstaň a sáhni na 1 věc k uklizení (5 s)',
-          'Polož doslova 1 věc na své místo nebo do dřezu (10 s)',
-          'Zastav se nebo přidej ještě 1 věc (15 s)',
+          'Vstaň a jdi k věcem',
+          'Zvedni jednu věc',
+          'Polož ji na místo',
         ],
         category: 'chore',
         source: 'heuristic_fallback',
@@ -297,9 +297,9 @@ export function getLocalHeuristicDecomposition(
     if (detectedCategory === 'communication') {
       return {
         steps: [
-          'Otevři konverzaci a přečti si 1 větu (10 s)',
-          'Napiš doslova 3 slova hrubé odpovědi (15 s)',
-          'Odešli to nebo nech koncept připravený (5 s)',
+          'Otevři zprávy v telefonu',
+          'Napiš jedno slovo odpovědi',
+          'Klikni na tlačítko odeslat',
         ],
         category: 'communication',
         source: 'heuristic_fallback',
@@ -308,9 +308,9 @@ export function getLocalHeuristicDecomposition(
     // Default LOW_BATTERY
     return {
       steps: [
-        `Otevři obrazovku nebo sáhni na věc pro "${(task || 'tento úkol').slice(0, 26)}" (10 s)`,
-        'Udělej 1 mikroskopický úvodní pohyb bez jakýchkoliv očekávání (15 s)',
-        'Oslav +10 XP a klidně si dej pauzu (5 s)',
+        'Otevři potřebný program',
+        'Napiš jedno slovo',
+        'Ulož rozdělanou práci',
       ],
       category: detectedCategory,
       source: 'heuristic_fallback',
@@ -322,9 +322,9 @@ export function getLocalHeuristicDecomposition(
     if (detectedCategory === 'fuel') {
       return {
         steps: [
-          'Dej si bílkoviny a hned se napij (60 s)',
-          'Ukliď prostor pro jídlo pro nulovou kognitivní zátěž',
-          'Vrať se do hlubokého soustředění plný energie',
+          'Jdi do kuchyně',
+          'Vezmi hotové jídlo',
+          'Sněz první sousto',
         ],
         category: 'fuel',
         source: 'heuristic_fallback',
@@ -333,9 +333,9 @@ export function getLocalHeuristicDecomposition(
     if (detectedCategory === 'chore' || detectedCategory === 'physical') {
       return {
         steps: [
-          'Zaútoč přímo na největší překážku v místnosti',
-          'Vyčisti nejviditelnější plochu za 2 rychlé minuty',
-          'Zafixuj čistý základ a hotovo',
+          'Vezmi hadr nebo vysavač',
+          'Ukliď hlavní plochu stolu',
+          'Vyhoď odpadky do koše',
         ],
         category: 'chore',
         source: 'heuristic_fallback',
@@ -344,9 +344,9 @@ export function getLocalHeuristicDecomposition(
     if (detectedCategory === 'communication') {
       return {
         steps: [
-          'Otevři zprávu a napiš rozhodnou nabídku nebo aktualizaci o 2 větách',
-          'Odešli okamžitě bez zbytečného přemýšlení',
-          'Archivuj vlákno a posuň se k dalšímu cíli',
+          'Otevři poštovní schránku',
+          'Napiš hlavní zprávu',
+          'Odešli e-mail hned',
         ],
         category: 'communication',
         source: 'heuristic_fallback',
@@ -355,9 +355,9 @@ export function getLocalHeuristicDecomposition(
     // Default PEAK_PERFORMANCE
     return {
       steps: [
-        'Otevři přímo klíčový soubor nebo dokument (přeskoč přípravu)',
-        'Spusť hlavní blok s nejvyšší pákou na 2 minuty plného focusu',
-        'Zafixuj nerušený rozběh v hyperfocusu',
+        'Otevři hlavní soubor projektu',
+        'Napiš první větu',
+        'Pokračuj v psaní textu',
       ],
       category: detectedCategory,
       source: 'heuristic_fallback',
@@ -376,9 +376,9 @@ export function getLocalHeuristicDecomposition(
   if (detectedCategory === 'communication') {
     return {
       steps: [
-        'Otevři konverzaci nebo prázdný koncept',
-        'Napiš syrovou 1 větu bez autocenzury',
-        'Odešli to nebo naplánuj odeslání hned',
+        'Otevři zprávy nebo e-mail',
+        'Napiš první větu textu',
+        'Klikni na tlačítko odeslat',
       ],
       category: 'communication',
       source: 'heuristic_fallback',
@@ -388,9 +388,9 @@ export function getLocalHeuristicDecomposition(
   if (detectedCategory === 'chore' || detectedCategory === 'physical') {
     return {
       steps: [
-        'Dojdi rovnou do cílové místnosti nebo k dané ploše',
-        'Zvedni a ukliď první 3 věci z povrchu',
-        'Soustřeď se na úklid pouze hlavní plochy po dobu 2 minut',
+        'Jdi k pracovnímu stolu',
+        'Zvedni první 3 předměty',
+        'Ukliď je do šuplíku',
       ],
       category: 'chore',
       source: 'heuristic_fallback',
@@ -399,9 +399,9 @@ export function getLocalHeuristicDecomposition(
 
   return {
     steps: [
-      'Otevři jediný potřebný nástroj, dokument nebo aplikaci',
-      'Napiš 1 hrubý řádek kódu, testovací poznámku nebo první větu',
-      'Soustřeď se nerušeně po dobu 2 minut',
+      'Otevři potřebný program',
+      'Napiš první slovo',
+      'Dokonči první detail',
     ],
     category: detectedCategory,
     source: 'heuristic_fallback',

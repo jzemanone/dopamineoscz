@@ -94,7 +94,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({
             </div>
 
             <div className="text-right shrink-0">
-              <span className="text-base sm:text-lg font-black text-amber-300">$27</span>
+              <span className="text-base sm:text-lg font-black text-amber-300">390 Kč</span>
               <span className="block text-[10px] text-slate-400 font-semibold">jednorázově</span>
             </div>
           </div>
@@ -126,8 +126,8 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({
               <div className="space-y-1.5 flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-2">
                   <h4 className="text-xs sm:text-sm font-black text-slate-100 flex items-center gap-1.5 leading-snug">
-                    <span>Přidat: ADHD Prompt Vault — 50 AI promptů</span>
-                    <span className="text-emerald-400 font-black shrink-0">(+$17)</span>
+                    <span>Přidat: ADHD Prompt Trezor — 50 AI promptů</span>
+                    <span className="text-emerald-400 font-black shrink-0">(+147 Kč)</span>
                   </h4>
                 </div>
 
@@ -156,7 +156,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({
           <span className="text-xs font-bold text-slate-300">Dnes celkem:</span>
           <div className="flex items-baseline gap-1.5">
             <span className="text-lg sm:text-xl font-black text-amber-300">
-              {includeBump ? '$44' : '$27'}
+              {includeBump ? '537 Kč' : '390 Kč'}
             </span>
             <span className="text-xs font-bold text-slate-400">jednorázově</span>
           </div>
@@ -172,8 +172,8 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({
             <Lock className="w-4 h-4 fill-current stroke-none" />
             <span>
               {includeBump
-                ? '🔒 DOKONČIT NÁKUP — $44 →'
-                : '🔒 DOKONČIT NÁKUP — $27 →'}
+                ? '🔒 DOKONČIT NÁKUP — 537 Kč →'
+                : '🔒 DOKONČIT NÁKUP — 390 Kč →'}
             </span>
             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </button>
@@ -189,7 +189,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({
                 }}
                 className="text-[11px] text-slate-400 hover:text-slate-200 underline decoration-slate-600 underline-offset-2 transition-colors font-medium"
               >
-                Ne, díky, chci jen Dopamine OS za $27
+                Ne, díky, chci jen Dopamine OS za 390 Kč
               </button>
             </div>
           )}

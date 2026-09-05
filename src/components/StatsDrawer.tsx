@@ -206,7 +206,7 @@ export const StatsDrawer: React.FC<StatsDrawerProps> = ({
                     }}
                     className="px-2.5 py-1 rounded-xl bg-gradient-to-r from-amber-500 to-amber-400 text-slate-950 text-[10px] font-black uppercase tracking-wider shadow-md shadow-amber-500/20 hover:brightness-110 active:scale-95 transition-all"
                   >
-                    Odemknout za $27
+                    Odemknout za 390 Kč
                   </button>
                 )}
               </div>

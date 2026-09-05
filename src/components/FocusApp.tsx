@@ -958,7 +958,7 @@ export const FocusApp: React.FC<FocusAppProps> = ({ onNavigateToSalesPage }) => 
   const taskToDecompose = tasks.find((t) => t.id === decomposeTaskId) || null;
 
   return (
-    <div className="min-h-screen w-full max-w-full overflow-x-hidden box-border bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-amber-500 selection:text-slate-950 pb-24">
+    <div className="min-h-screen w-full max-w-full overflow-x-clip box-border bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-amber-500 selection:text-slate-950 pb-24">
       {/* Pristine Sticky Top Bar (Status Only: Brand & XP Badge) */}
       <Header
         stats={stats}

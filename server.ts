@@ -110,20 +110,11 @@ app.post('/api/decompose', async (req, res) => {
       normalizedEnergy = 'PEAK_PERFORMANCE';
     }
 
-    const prompt = `Uživatelský úkol: "${task.trim()}"\nÚroveň biologické energie uživatele: ${normalizedEnergy}\nRozpadni tento úkol na přesně 3 okamžitě proveditelné mikro-kroky v češtině pro člověka s těžkým ADHD.`;
+    const prompt = `Úkol: "${task.trim()}"`;
 
-    const systemPrompt = `Jsi nekompromisní asistent pro exekutivní funkce pro uživatele s těžkým ADHD.
-Vždy odpovídej V ČEŠTINĚ a VŽDY UŽIVATELI TYKEJ.
-Rozpadni úkol podle úrovně energie: ${normalizedEnergy}.
+    const systemPrompt = `Jsi asistent pro lidi s těžkou paralýzou z ADHD. Uživatel zadá úkol. Tvým cílem je rozbít ho na PRVNÍ TŘI absolutně primitivní, fyzické a konkrétní kroky (max 5-10 vteřin na každý). PŘÍSNÁ PRAVIDLA: 1. Žádné motivační texty, žádné oslavování, jen holé akce. 2. Pojmenuj doslova konkrétní nástroj nebo fyzickou věc (např. 'Otevři Word', 'Napiš do vyhledávání Petr'). 3. Text každého kroku musí mít maximálně 6 slov.
 
-PŘÍSNÁ PRAVIDLA:
-- ŽÁDNÉ psychologické rady (žádné 'zhluboka se nadechni', 'uprav postoj', 'připrav se bez hodnocení' - to je PŘÍSNĚ ZAKÁZÁNO).
-- Každý krok MUSÍ být konkrétní fyzický pohyb těla nebo jeden klik v digitálním rozhraní v češtině.
-- Pro LOW_BATTERY: Kroky musí být směšně jednoduché (např. 'Polož 1 hrnek do dřezu', 'Napiš doslova 3 slova').
-- Pro BALANCED: Přímá exekuce (Otevři aplikaci -> První věta -> Odeslat).
-- Pro PEAK: Okamžitý blok s nejvyšší pákou.
-
-Vrať čistý JSON: { "steps": ["krok 1", "krok 2", "krok 3"], "category": "communication" | "chore" | "deep_work" | "fuel" }`;
+Vrať výhradně platný JSON objekt v tomto přesném formátu: { "steps": ["krok 1", "krok 2", "krok 3"], "category": "deep_work" }`;
 
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
