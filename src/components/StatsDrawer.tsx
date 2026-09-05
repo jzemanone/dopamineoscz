@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Award, Flame, Zap, Trophy, Sparkles, CheckCircle2, Clock, Smartphone, RotateCcw, Settings, AlertTriangle, Volume2, VolumeX, Vibrate, Key, ShieldCheck } from 'lucide-react';
+import { X, Award, Flame, Zap, Trophy, Sparkles, CheckCircle2, Clock, Smartphone, RotateCcw, Settings, AlertTriangle, Volume2, VolumeX, Vibrate, Key, ShieldCheck, FileText } from 'lucide-react';
 import { UserStats, AppSettings, BADGES_LIST, getLevelTitle } from '../types';
 
 interface StatsDrawerProps {
@@ -16,6 +16,7 @@ interface StatsDrawerProps {
   licenseKey?: string;
   onOpenPaywall?: () => void;
   onOpenRestoreLicense?: () => void;
+  onOpenPdfVault?: () => void;
 }
 
 export const StatsDrawer: React.FC<StatsDrawerProps> = ({
@@ -32,6 +33,7 @@ export const StatsDrawer: React.FC<StatsDrawerProps> = ({
   licenseKey,
   onOpenPaywall,
   onOpenRestoreLicense,
+  onOpenPdfVault,
 }) => {
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
@@ -222,6 +224,25 @@ export const StatsDrawer: React.FC<StatsDrawerProps> = ({
                 >
                   <Key className="w-3 h-3" />
                   <span>Obnovit doživotní licenční klíč</span>
+                </button>
+              )}
+
+              {onOpenPdfVault && (
+                <button
+                  onClick={() => {
+                    onPlayClick();
+                    onClose();
+                    onOpenPdfVault();
+                  }}
+                  className="w-full py-2 px-3 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/15 border border-emerald-500/30 hover:border-emerald-500/50 text-emerald-300 text-[11px] font-bold flex items-center justify-between transition-all"
+                >
+                  <div className="flex items-center gap-2">
+                    <FileText className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                    <span>50 krizových promptů (PDF Vault)</span>
+                  </div>
+                  <span className="text-[10px] font-black uppercase text-emerald-400 bg-emerald-500/20 px-1.5 py-0.5 rounded">
+                    STÁHNOUT
+                  </span>
                 </button>
               )}
             </div>

@@ -14,8 +14,8 @@ export interface FreemiumState {
 
 const STORAGE_KEY = 'dopamine_access_v1';
 export const DAILY_FREE_TASK_LIMIT = 3;
-export const STRIPE_STANDARD_URL = 'https://buy.stripe.com/28E14n5FHfuedtr3JB0co01';
-export const STRIPE_ULTIMATE_URL = 'https://buy.stripe.com/8x23cv6JLfuegFDeof0co02';
+export const STRIPE_STANDARD_URL = 'https://buy.stripe.com/eVq9AT7NP0zk3SRa7Z0co03';
+export const STRIPE_ULTIMATE_URL = 'https://buy.stripe.com/5kQ8wP1pr0zk1KJcg70co04';
 export const STRIPE_CHECKOUT_URL = STRIPE_STANDARD_URL;
 
 const getTodayDateString = (): string => {
@@ -29,12 +29,16 @@ const getTodayDateString = (): string => {
 export const getFreemiumState = (): FreemiumState => {
   const today = getTodayDateString();
   const raw = localStorage.getItem(STORAGE_KEY);
+  const isPremiumStored =
+    typeof localStorage !== 'undefined' &&
+    (localStorage.getItem('dopamine_os_premium') === 'true' ||
+      localStorage.getItem('dopamine_has_access') === 'true');
 
   if (!raw) {
     const initialState: FreemiumState = {
       completedTasksCount: 0,
       lastActiveDate: today,
-      isPro: false,
+      isPro: isPremiumStored,
     };
     saveFreemiumState(initialState);
     return initialState;
@@ -42,6 +46,11 @@ export const getFreemiumState = (): FreemiumState => {
 
   try {
     const parsed: FreemiumState = JSON.parse(raw);
+    if (isPremiumStored && !parsed.isPro) {
+      parsed.isPro = true;
+      saveFreemiumState(parsed);
+      return parsed;
+    }
 
     // If day rolled over and user is not Pro, reset daily counter
     if (parsed.lastActiveDate !== today && !parsed.isPro) {
@@ -59,7 +68,7 @@ export const getFreemiumState = (): FreemiumState => {
     const fallbackState: FreemiumState = {
       completedTasksCount: 0,
       lastActiveDate: today,
-      isPro: false,
+      isPro: isPremiumStored,
     };
     saveFreemiumState(fallbackState);
     return fallbackState;
@@ -143,17 +152,20 @@ export const activateProWithKey = (
   return { success: true };
 };
 
+export interface PaymentCheckResult {
+  activated: boolean;
+  licenseKey?: string;
+  isBump?: boolean;
+}
+
 /**
  * Inspects URL parameters for Stripe success redirects (?success=true, ?pro=true, ?bump=true, ?license=...)
  * or purchase confirmation route (/purchase-complete).
- * Automatically unlocks Pro and cleans the URL without reloading the page when appropriate.
+ * Automatically unlocks Pro, stores dopamine_os_premium, and cleans the URL without reloading the page.
  */
 export const initPaymentCheck = (
   force = false
-): {
-  activated: boolean;
-  licenseKey?: string;
-} => {
+): PaymentCheckResult => {
   if (typeof window === 'undefined') {
     return { activated: false };
   }
@@ -163,12 +175,14 @@ export const initPaymentCheck = (
     const isPurchaseCompletePath =
       window.location.pathname.includes('purchase-complete');
 
+    const isSuccess = urlParams.get('success') === 'true';
+    const isBump = urlParams.get('bump') === 'true';
+
     const hasSuccessParam =
       force ||
       isPurchaseCompletePath ||
-      urlParams.get('success') === 'true' ||
+      isSuccess ||
       urlParams.get('pro') === 'true' ||
-      urlParams.get('bump') === 'true' ||
       urlParams.get('payment_success') === 'true' ||
       urlParams.get('paid') === 'true' ||
       urlParams.has('license') ||
@@ -183,6 +197,18 @@ export const initPaymentCheck = (
         urlParams.get('session_id') ||
         `DOP-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
 
+      // Save dopamine_os_premium flag in localStorage
+      try {
+        localStorage.setItem('dopamine_os_premium', 'true');
+        localStorage.setItem('dopamine_has_access', 'true');
+        localStorage.setItem('focus_access_token', 'DOPAMINE-VIP-2026');
+        if (isBump) {
+          localStorage.setItem('dopamine_os_vault_unlocked', 'true');
+        }
+      } catch {
+        // Storage safe fallback
+      }
+
       const currentState = getFreemiumState();
       const updatedState: FreemiumState = {
         ...currentState,
@@ -192,24 +218,21 @@ export const initPaymentCheck = (
       };
       saveFreemiumState(updatedState);
 
-      // Synchronize with general access token storage
-      try {
-        localStorage.setItem('dopamine_has_access', 'true');
-        localStorage.setItem('focus_access_token', 'DOPAMINE-VIP-2026');
-      } catch {
-        // Storage safe fallback
+      // Clean URL address bar with window.history.replaceState
+      if (!isPurchaseCompletePath && (isSuccess || urlParams.get('pro') === 'true' || isBump)) {
+        try {
+          const cleanUrl = window.location.origin + window.location.pathname;
+          window.history.replaceState({}, document.title, cleanUrl);
+        } catch {
+          // ignore
+        }
       }
 
-      // Clean query params only if on standard app path with success flags
-      if (
-        !isPurchaseCompletePath &&
-        (urlParams.get('success') === 'true' || urlParams.get('pro') === 'true')
-      ) {
-        const cleanUrl = window.location.origin + window.location.pathname;
-        window.history.replaceState({}, document.title, cleanUrl);
-      }
-
-      return { activated: true, licenseKey: updatedState.licenseKey };
+      return {
+        activated: true,
+        licenseKey: updatedState.licenseKey,
+        isBump,
+      };
     }
   } catch {
     // Non-blocking fallback

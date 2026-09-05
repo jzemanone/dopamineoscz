@@ -127,7 +127,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({
                 <div className="flex items-center justify-between gap-2">
                   <h4 className="text-xs sm:text-sm font-black text-slate-100 flex items-center gap-1.5 leading-snug">
                     <span>Přidat: ADHD Prompt Trezor — 50 AI promptů</span>
-                    <span className="text-emerald-400 font-black shrink-0">(+147 Kč)</span>
+                    <span className="text-emerald-400 font-black shrink-0">(+149 Kč)</span>
                   </h4>
                 </div>
 
@@ -156,7 +156,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({
           <span className="text-xs font-bold text-slate-300">Dnes celkem:</span>
           <div className="flex items-baseline gap-1.5">
             <span className="text-lg sm:text-xl font-black text-amber-300">
-              {includeBump ? '537 Kč' : '390 Kč'}
+              {includeBump ? '539 Kč' : '390 Kč'}
             </span>
             <span className="text-xs font-bold text-slate-400">jednorázově</span>
           </div>
@@ -172,7 +172,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({
             <Lock className="w-4 h-4 fill-current stroke-none" />
             <span>
               {includeBump
-                ? '🔒 DOKONČIT NÁKUP — 537 Kč →'
+                ? '🔒 DOKONČIT NÁKUP — 539 Kč →'
                 : '🔒 DOKONČIT NÁKUP — 390 Kč →'}
             </span>
             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />

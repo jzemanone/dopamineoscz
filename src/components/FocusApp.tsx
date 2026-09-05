@@ -41,6 +41,7 @@ import { OpenLoopsDrawer } from './OpenLoopsDrawer';
 import { EveningRecapModal } from './EveningRecapModal';
 import { PaywallModal } from './PaywallModal';
 import { RestoreLicenseModal } from './RestoreLicenseModal';
+import { PdfVaultModal } from './PdfVaultModal';
 import {
   getFreemiumState,
   recordTaskCompletion,
@@ -121,18 +122,54 @@ export const FocusApp: React.FC<FocusAppProps> = ({ onNavigateToSalesPage }) => 
   const [freemium, setFreemium] = useState<FreemiumState>(getFreemiumState);
   const [isPaywallOpen, setIsPaywallOpen] = useState<boolean>(false);
   const [isRestoreLicenseOpen, setIsRestoreLicenseOpen] = useState<boolean>(false);
+  const [isPdfVaultModalOpen, setIsPdfVaultModalOpen] = useState<boolean>(false);
 
   // Initial load checks: Morning Day Navigator & PWA prompt & Service Worker & Payment check
   useEffect(() => {
+    // 1. Inspect URL parameters for Stripe success redirects & bump detection
+    const urlParams = new URLSearchParams(window.location.search);
+    const hasSuccessParam = urlParams.get('success') === 'true';
+    const hasBumpParam = urlParams.get('bump') === 'true';
+
+    // If success=true is present in URL, immediately save dopamine_os_premium = true into localStorage
+    if (hasSuccessParam) {
+      try {
+        localStorage.setItem('dopamine_os_premium', 'true');
+        localStorage.setItem('dopamine_has_access', 'true');
+      } catch {
+        // Storage safe fallback
+      }
+    }
+
     // Check Stripe checkout redirect tokens or success params
     const paymentResult = initPaymentCheck();
-    if (paymentResult.activated) {
+    if (paymentResult.activated || hasSuccessParam) {
       const activeState = getFreemiumState();
       setFreemium(activeState);
       soundManager.playLevelUp(true);
       launchConfetti();
       triggerXpToast(100, 'Doživotní Pro aktivováno (+100 XP)!');
       handleAwardXp(100, 'Aktivace doživotního Pro (+100 XP)');
+
+      // If bump=true was in the URL (Order Bump purchased), open the PDF Vault modal
+      if (hasBumpParam || paymentResult.isBump) {
+        setIsPdfVaultModalOpen(true);
+        try {
+          localStorage.setItem('dopamine_os_vault_unlocked', 'true');
+        } catch {
+          // Storage safe fallback
+        }
+      }
+    }
+
+    // Clean URL address bar using window.history.replaceState so success and bump don't linger
+    if (hasSuccessParam || hasBumpParam) {
+      try {
+        const cleanUrl = window.location.origin + window.location.pathname;
+        window.history.replaceState({}, document.title, cleanUrl);
+      } catch {
+        // Storage safe fallback
+      }
     }
 
     // Subscribe to multi-tab or intra-app freemium state sync
@@ -157,7 +194,6 @@ export const FocusApp: React.FC<FocusAppProps> = ({ onNavigateToSalesPage }) => 
     const hasCheckedInToday = stats.lastCheckInDate === todayStr;
 
     // Show Morning Day Navigator if not checked in today OR if directly launched via campaign (?start= / ?utm_source=manychat)
-    const urlParams = new URLSearchParams(window.location.search);
     const shouldDirectLaunch = urlParams.has('start') || urlParams.get('utm_source') === 'manychat';
 
     if (shouldDirectLaunch || !hasCheckedInToday) {
@@ -1196,6 +1232,7 @@ export const FocusApp: React.FC<FocusAppProps> = ({ onNavigateToSalesPage }) => 
         licenseKey={freemium.licenseKey}
         onOpenPaywall={() => setIsPaywallOpen(true)}
         onOpenRestoreLicense={() => setIsRestoreLicenseOpen(true)}
+        onOpenPdfVault={() => setIsPdfVaultModalOpen(true)}
       />
 
       {/* Open Loops Drawer (LIFE Layer) */}
@@ -1268,6 +1305,12 @@ export const FocusApp: React.FC<FocusAppProps> = ({ onNavigateToSalesPage }) => 
           handleAwardXp(100, 'Lifetime Pro Activation (+100 XP)');
         }}
         onPlayClick={handlePlayClick}
+      />
+
+      {/* PDF Vault Download Modal (Order Bump) */}
+      <PdfVaultModal
+        isOpen={isPdfVaultModalOpen}
+        onClose={() => setIsPdfVaultModalOpen(false)}
       />
     </div>
   );

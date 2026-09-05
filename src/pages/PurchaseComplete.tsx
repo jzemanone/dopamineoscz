@@ -120,7 +120,7 @@ export const PurchaseComplete: React.FC<PurchaseCompleteProps> = ({
                 <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
                 <span>Bonus odemčen</span>
               </span>
-              <span className="text-xs font-bold text-emerald-400">HODNOTA 147 Kč</span>
+              <span className="text-xs font-bold text-emerald-400">HODNOTA 149 Kč</span>
             </div>
 
             <h3 className="text-lg font-black text-slate-100 mb-1 flex items-center gap-2">
@@ -208,7 +208,7 @@ export const PurchaseComplete: React.FC<PurchaseCompleteProps> = ({
                   <FileText className="w-3.5 h-3.5 text-emerald-400" />
                   <span>ADHD AI Prompt Trezor (50 promptů)</span>
                 </div>
-                <span className="font-bold text-emerald-400">147 Kč</span>
+                <span className="font-bold text-emerald-400">149 Kč</span>
               </div>
             )}
           </div>

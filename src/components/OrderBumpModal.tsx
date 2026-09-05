@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Check, Zap, FileText, Lock, ShieldCheck, Sparkles, Loader2 } from 'lucide-react';
 import { trackCheckoutRedirect, getStoredUtmParams } from '../lib/analytics';
+import { STRIPE_STANDARD_URL, STRIPE_ULTIMATE_URL } from '../lib/freemium';
 
 interface OrderBumpModalProps {
   isOpen: boolean;
@@ -16,7 +17,7 @@ export const OrderBumpModal: React.FC<OrderBumpModalProps> = ({ isOpen, onClose 
 
   const handleCheckout = (productKeyOverride?: 'base' | 'base_with_vault') => {
     const selectedProduct = productKeyOverride || (includeBump ? 'base_with_vault' : 'base');
-    const totalAmount = selectedProduct === 'base_with_vault' ? 537 : 390;
+    const totalAmount = selectedProduct === 'base_with_vault' ? 539 : 390;
     setLoading(true);
     setErrorMsg(null);
 
@@ -25,8 +26,8 @@ export const OrderBumpModal: React.FC<OrderBumpModalProps> = ({ isOpen, onClose 
 
     let redirectUrl =
       selectedProduct === 'base_with_vault'
-        ? 'https://buy.stripe.com/8x23cv6JLfuegFDeof0co02'
-        : 'https://buy.stripe.com/28E14n5FHfuedtr3JB0co01';
+        ? STRIPE_ULTIMATE_URL
+        : STRIPE_STANDARD_URL;
 
     try {
       const utm = getStoredUtmParams();
@@ -44,7 +45,7 @@ export const OrderBumpModal: React.FC<OrderBumpModalProps> = ({ isOpen, onClose 
     window.location.href = redirectUrl;
   };
 
-  const currentTotal = includeBump ? 537 : 390;
+  const currentTotal = includeBump ? 539 : 390;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-fadeIn">
@@ -117,7 +118,7 @@ export const OrderBumpModal: React.FC<OrderBumpModalProps> = ({ isOpen, onClose 
             <div className="flex-1">
               <div className="flex items-center justify-between gap-2">
                 <span className="text-xs sm:text-sm font-bold text-emerald-300 leading-snug">
-                  Přidat: ADHD Prompt Trezor — 50 AI promptů (+147 Kč)
+                  Přidat: ADHD Prompt Trezor — 50 AI promptů (+149 Kč)
                 </span>
               </div>
 

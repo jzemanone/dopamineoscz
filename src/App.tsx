@@ -15,9 +15,17 @@ import { initUtmTracking } from './lib/analytics';
 function AppRouteGuard() {
   const [, setLocation] = useLocation();
   const [isAuthorized, setIsAuthorized] = useState<boolean>(() => {
-    // 0. Check for direct DM / ManyChat campaign launch (?start= / ?utm_source=manychat)
     if (typeof window !== 'undefined') {
       const urlParams = new URLSearchParams(window.location.search);
+      // Stripe payment return detection: ?success=true
+      if (urlParams.get('success') === 'true') {
+        try {
+          localStorage.setItem('dopamine_os_premium', 'true');
+        } catch {}
+        grantAccess();
+        return true;
+      }
+      // 0. Check for direct DM / ManyChat campaign launch (?start= / ?utm_source=manychat)
       if (urlParams.has('start') || urlParams.get('utm_source') === 'manychat') {
         grantAccess();
         return true;
@@ -26,11 +34,25 @@ function AppRouteGuard() {
     // 1. Process ?access= URL parameter if present
     const unlockedViaUrl = processUrlAccessParam();
     // 2. Check if user has access in localStorage or Pro license
-    return unlockedViaUrl || checkHasAccess() || getFreemiumState().isPro;
+    return (
+      unlockedViaUrl ||
+      checkHasAccess() ||
+      (typeof localStorage !== 'undefined' && localStorage.getItem('dopamine_os_premium') === 'true') ||
+      getFreemiumState().isPro
+    );
   });
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('success') === 'true') {
+      try {
+        localStorage.setItem('dopamine_os_premium', 'true');
+      } catch {}
+      grantAccess();
+      setIsAuthorized(true);
+      return;
+    }
+
     const shouldDirectLaunch = urlParams.has('start') || urlParams.get('utm_source') === 'manychat';
     if (shouldDirectLaunch) {
       grantAccess();
@@ -41,6 +63,7 @@ function AppRouteGuard() {
     const hasAccess =
       processUrlAccessParam() ||
       checkHasAccess() ||
+      (typeof localStorage !== 'undefined' && localStorage.getItem('dopamine_os_premium') === 'true') ||
       getFreemiumState().isPro;
 
     if (!hasAccess) {
@@ -64,9 +87,22 @@ export default function App() {
   useEffect(() => {
     initUtmTracking();
 
-    // Inspect URL search params on mount to immediately bypass marketing page for direct DM campaigns
+    // Inspect URL search params on mount
     if (typeof window !== 'undefined') {
       const urlParams = new URLSearchParams(window.location.search);
+
+      // Handle Stripe success redirect if landed on / instead of /app
+      if (urlParams.get('success') === 'true') {
+        try {
+          localStorage.setItem('dopamine_os_premium', 'true');
+        } catch {}
+        grantAccess();
+        if (location !== '/app') {
+          setLocation('/app' + window.location.search);
+        }
+      }
+
+      // Handle direct campaign launches
       const shouldDirectLaunch = urlParams.has('start') || urlParams.get('utm_source') === 'manychat';
       if (shouldDirectLaunch && location !== '/app') {
         grantAccess();
