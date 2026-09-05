@@ -1,0 +1,6 @@
+{
+  "name": "Dopamine OS",
+  "description": "ADHD Day Timeline Autopilot & Executive Function Co-Pilot featuring AI task decomposition, continuous queue auto-advancing, energy triage, and sensory freeze breakers.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
