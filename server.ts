@@ -110,21 +110,39 @@ app.post('/api/decompose', async (req, res) => {
       normalizedEnergy = 'PEAK_PERFORMANCE';
     }
 
-    const prompt = `Úkol: "${task.trim()}"`;
+    const taskText = task.trim();
+    const prompt = `Konkrétní zadaný úkol: "${taskText}"`;
 
-    const systemPrompt = `Jsi asistent pro lidi s ADHD v ČR. Uživatel zadá úkol. Vrať přesně 3 absolutně primitivní, fyzické a konkrétní kroky v češtině. PRAVIDLA: 1. Piš česky. 2. Žádné motivační texty, žádné oslavování. 3. Každý krok max 5 slov, popiš konkrétní akci (např. 'Otevři Google Chrome', 'Napiš předmět zprávy'). Vrať pouze čistý JSON pole řetězců.`;
+    const systemPrompt = `Jsi nekompromisní asistent pro lidi s těžkým ADHD. Uživatel ti zadá konkrétní úkol. Musíš vymyslet 3 absolutně konkrétní, fyzické a doslovné mikro-kroky POUZE pro tento zadaný úkol (žádné obecné šablony jako 'otevři program', pokud jde o mytí nádobí!). PRAVIDLA: 1. Piš česky. 2. Žádné motivační kecy. 3. Každý krok max 6 slov. Vrať pouze JSON pole 3 stringů.`;
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: prompt,
-      config: {
-        systemInstruction: systemPrompt,
-        responseMimeType: 'application/json',
-        temperature: 0.1,
-      },
-    });
+    const modelsToTry = ['gemini-3.6-flash', 'gemini-3.8-flash'];
+    let text = '';
+    let lastErr: any = null;
 
-    const text = (response.text || '').trim();
+    for (const model of modelsToTry) {
+      try {
+        const response = await ai.models.generateContent({
+          model,
+          contents: prompt,
+          config: {
+            systemInstruction: systemPrompt,
+            responseMimeType: 'application/json',
+            temperature: 0.1,
+          },
+        });
+        if (response.text && response.text.trim()) {
+          text = response.text.trim();
+          break;
+        }
+      } catch (e: any) {
+        lastErr = e;
+        console.warn(`[decompose] model ${model} failed, trying next...`);
+      }
+    }
+
+    if (!text && lastErr) {
+      throw lastErr;
+    }
     let parsed: any;
     try {
       parsed = JSON.parse(text);
@@ -177,7 +195,7 @@ app.post('/api/classify-dump', async (req, res) => {
     const ai = new GoogleGenAI({ apiKey });
 
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3.8-flash',
       contents: `Raw ADHD Dump:\n"""\n${rawText.trim()}\n"""`,
       config: {
         systemInstruction: `You are an ADHD executive function co-pilot for "Dopamine OS". Analyze raw dump text and separate it into:

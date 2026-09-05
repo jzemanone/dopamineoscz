@@ -992,7 +992,7 @@ export const FocusApp: React.FC<FocusAppProps> = ({ onNavigateToSalesPage }) => 
   const taskToDecompose = tasks.find((t) => t.id === decomposeTaskId) || null;
 
   return (
-    <div className="h-screen w-screen overflow-hidden flex flex-col justify-between p-4 bg-black text-white font-sans select-none">
+    <div className="h-[100dvh] w-screen overflow-hidden flex flex-col justify-between p-3 sm:p-4 bg-black text-white font-sans select-none">
       {/* Pristine Sticky Top Bar (Status Only: Brand & XP Badge) */}
       <Header
         stats={stats}
@@ -1010,12 +1010,12 @@ export const FocusApp: React.FC<FocusAppProps> = ({ onNavigateToSalesPage }) => 
       />
 
       {/* Main Container Column */}
-      <main className="flex-1 max-w-md w-full mx-auto flex flex-col justify-center min-h-0 py-1 overflow-hidden">
+      <main className="flex-1 max-w-md w-full mx-auto flex flex-col min-h-0 py-0.5 overflow-hidden">
         {/* ========================================================================= */}
         {/* TAB 1: TODAY AUTOPILOT FLOW */}
         {/* ========================================================================= */}
         {activeTab === 'today' && (
-          <>
+          <div className="flex-1 min-h-0 flex flex-col justify-center">
             {isDayClosed ? (
               <div className="bg-neutral-950 border border-neutral-800 rounded-3xl p-5 text-center space-y-4 shadow-xl">
                 <div className="w-10 h-10 rounded-2xl bg-indigo-500/20 border border-indigo-500/30 text-indigo-400 flex items-center justify-center mx-auto">
@@ -1078,14 +1078,14 @@ export const FocusApp: React.FC<FocusAppProps> = ({ onNavigateToSalesPage }) => 
                 onOpenRestoreLicense={() => setIsRestoreLicenseOpen(true)}
               />
             )}
-          </>
+          </div>
         )}
 
         {/* ========================================================================= */}
         {/* TAB 2: BACKLOG & INBOX (Includes Daily Tasks & Open Loops) */}
         {/* ========================================================================= */}
         {activeTab === 'backlog' && (
-          <div className="h-full overflow-y-auto custom-scrollbar">
+          <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar pr-0.5">
             <BacklogView
               tasks={tasks}
               activeTaskId={activeTask?.id || null}
@@ -1117,7 +1117,7 @@ export const FocusApp: React.FC<FocusAppProps> = ({ onNavigateToSalesPage }) => 
         {/* TAB 3: TOOLKIT (Calm Utilities: Meal Prep & Spending Pause) */}
         {/* ========================================================================= */}
         {activeTab === 'toolkit' && (
-          <div className="h-full overflow-y-auto custom-scrollbar">
+          <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar pr-0.5">
             <ToolkitView
               currentCapacity={currentCapacity}
               customMeals={customMeals}
@@ -1138,7 +1138,7 @@ export const FocusApp: React.FC<FocusAppProps> = ({ onNavigateToSalesPage }) => 
         {/* TAB 4: SOS STATE & RECHARGE */}
         {/* ========================================================================= */}
         {activeTab === 'sos' && (
-          <div className="h-full overflow-y-auto custom-scrollbar">
+          <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar pr-0.5">
             <SosView
               onAwardXp={handleAwardXp}
               onSetCapacity={(cap) => setCurrentCapacity(cap)}

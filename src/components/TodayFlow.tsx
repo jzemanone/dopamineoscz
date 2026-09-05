@@ -142,11 +142,19 @@ export const TodayFlow: React.FC<TodayFlowProps> = ({
   const displaySteps =
     subtasks.length > 0
       ? subtasks.slice(0, 3)
-      : [
-          { id: 'def-1', title: 'Otevři potřebný program', completed: false },
-          { id: 'def-2', title: 'Napiš první slovo', completed: false },
-          { id: 'def-3', title: 'Dokonči první detail', completed: false },
-        ];
+      : autoDecomposing && activeTask
+      ? [
+          { id: 'load-1', title: `Rozsekávám "${activeTask.title.slice(0, 28)}"...`, completed: false },
+          { id: 'load-2', title: 'Generuji 3 konkrétní fyzické kroky...', completed: false },
+          { id: 'load-3', title: 'Příprava akce...', completed: false },
+        ]
+      : activeTask
+      ? [
+          { id: 'act-1', title: `První fyzický krok pro: ${activeTask.title.slice(0, 24)}`, completed: false },
+          { id: 'act-2', title: 'Věnuj se tomu 30 sekund', completed: false },
+          { id: 'act-3', title: 'Dokonči základní krok', completed: false },
+        ]
+      : [];
 
   const allStepsCompleted =
     displaySteps.length > 0 && displaySteps.every((s) => s.completed);

@@ -397,11 +397,13 @@ export function getLocalHeuristicDecomposition(
     };
   }
 
+  const cleanTask = (task || '').trim();
+  const preview = cleanTask.length > 25 ? cleanTask.slice(0, 25) + '...' : cleanTask;
   return {
     steps: [
-      'Otevři potřebný program',
-      'Napiš první slovo',
-      'Dokonči první detail',
+      `První fyzický pohyb pro: ${preview || 'úkol'}`,
+      'Věnuj se tomu 30 sekund',
+      'Dokonči základní krok',
     ],
     category: detectedCategory,
     source: 'heuristic_fallback',
@@ -409,7 +411,7 @@ export function getLocalHeuristicDecomposition(
 }
 
 /**
- * Calls `/api/decompose` with strict timeout (2500ms).
+ * Calls `/api/decompose` with a generous timeout (8000ms).
  * If offline, error, or slow network, immediately returns local heuristic.
  */
 export async function decomposeWithAI(
@@ -431,7 +433,7 @@ export async function decomposeWithAI(
 
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 2800);
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
 
     const response = await fetch('/api/decompose', {
       method: 'POST',
@@ -476,11 +478,12 @@ export async function decomposeWithAI(
     // Graceful offline heuristic fallback
     const heuristic = getLocalHeuristicDecomposition(cleanTask, bioCapacity);
     if (simpler) {
+      const preview = cleanTask.length > 25 ? cleanTask.slice(0, 25) + '...' : cleanTask;
       return {
         steps: [
-          'Otevři potřebný nástroj nebo soubor',
-          'Udělej první drobný pohyb',
-          'Pokračuj 30 vteřin dál',
+          `Udělej první pohyb pro: ${preview || 'úkol'}`,
+          'Věnuj se tomu 30 vteřin',
+          'Pokračuj dalším detailem',
         ],
         category: heuristic.category,
         source: 'heuristic_fallback',

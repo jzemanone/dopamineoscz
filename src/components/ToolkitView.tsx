@@ -299,7 +299,7 @@ export const ToolkitView: React.FC<ToolkitProps> = ({
   const isImpulseFormGated = !isPro && spendingPauses.length >= 1;
 
   return (
-    <div className="w-full max-w-xl mx-auto px-4 pb-24 pt-3 sm:pt-6 space-y-5 animate-fadeIn">
+    <div className="w-full space-y-3 pt-1 pb-4 animate-fadeIn">
       {/* ========================================================================= */}
       {/* 1. NAVIGATION TABS (TOP BAR) */}
       {/* ========================================================================= */}
