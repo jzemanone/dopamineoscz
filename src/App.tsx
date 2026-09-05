@@ -77,11 +77,8 @@ export default function App() {
   }, [location, setLocation]);
 
   const handleNavigateToApp = () => {
-    if (checkHasAccess()) {
-      setLocation('/app');
-    } else {
-      setLocation('/?auth_error=true');
-    }
+    grantAccess();
+    setLocation('/app');
   };
 
   return (
