@@ -478,9 +478,9 @@ export async function decomposeWithAI(
     if (simpler) {
       return {
         steps: [
-          `Just open the tool or document for "${cleanTask.slice(0, 30)}" (10s)`,
-          'Write 1 single sentence or do 1 small movement without expectations',
-          'Stop or choose to continue for another 30 seconds',
+          'Otevři potřebný nástroj nebo soubor',
+          'Udělej první drobný pohyb',
+          'Pokračuj 30 vteřin dál',
         ],
         category: heuristic.category,
         source: 'heuristic_fallback',

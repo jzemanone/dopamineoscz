@@ -112,9 +112,7 @@ app.post('/api/decompose', async (req, res) => {
 
     const prompt = `Úkol: "${task.trim()}"`;
 
-    const systemPrompt = `Jsi asistent pro lidi s těžkou paralýzou z ADHD. Uživatel zadá úkol. Tvým cílem je rozbít ho na PRVNÍ TŘI absolutně primitivní, fyzické a konkrétní kroky (max 5-10 vteřin na každý). PŘÍSNÁ PRAVIDLA: 1. Žádné motivační texty, žádné oslavování, jen holé akce. 2. Pojmenuj doslova konkrétní nástroj nebo fyzickou věc (např. 'Otevři Word', 'Napiš do vyhledávání Petr'). 3. Text každého kroku musí mít maximálně 6 slov.
-
-Vrať výhradně platný JSON objekt v tomto přesném formátu: { "steps": ["krok 1", "krok 2", "krok 3"], "category": "deep_work" }`;
+    const systemPrompt = `Jsi asistent pro lidi s ADHD v ČR. Uživatel zadá úkol. Vrať přesně 3 absolutně primitivní, fyzické a konkrétní kroky v češtině. PRAVIDLA: 1. Piš česky. 2. Žádné motivační texty, žádné oslavování. 3. Každý krok max 5 slov, popiš konkrétní akci (např. 'Otevři Google Chrome', 'Napiš předmět zprávy'). Vrať pouze čistý JSON pole řetězců.`;
 
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
@@ -122,23 +120,40 @@ Vrať výhradně platný JSON objekt v tomto přesném formátu: { "steps": ["kr
       config: {
         systemInstruction: systemPrompt,
         responseMimeType: 'application/json',
-        temperature: 0.2,
+        temperature: 0.1,
       },
     });
 
-    const text = response.text || '';
-    const parsed = JSON.parse(text);
+    const text = (response.text || '').trim();
+    let parsed: any;
+    try {
+      parsed = JSON.parse(text);
+    } catch {
+      // If there are markdown fences or whitespace
+      const match = text.match(/\[[\s\S]*\]/);
+      if (match) {
+        parsed = JSON.parse(match[0]);
+      } else {
+        throw new Error('Failed to parse JSON array from Gemini');
+      }
+    }
 
-    if (Array.isArray(parsed.steps) && parsed.steps.length >= 3) {
-      const validCategories = ['communication', 'chore', 'deep_work', 'fuel', 'physical', 'digital', 'admin'];
+    let steps: string[] = [];
+    if (Array.isArray(parsed)) {
+      steps = parsed.map((s: any) => String(s).trim()).filter(Boolean);
+    } else if (parsed && Array.isArray(parsed.steps)) {
+      steps = parsed.steps.map((s: any) => String(s).trim()).filter(Boolean);
+    }
+
+    if (steps.length > 0) {
       return res.json({
-        steps: parsed.steps.slice(0, 3).map((s: any) => String(s).trim()),
-        category: validCategories.includes(parsed.category) ? parsed.category : 'deep_work',
+        steps: steps.slice(0, 3),
+        category: 'deep_work',
         source: 'gemini',
       });
     }
 
-    return res.status(500).json({ error: 'Invalid response structure from Gemini' });
+    return res.status(500).json({ error: 'Invalid step array from Gemini' });
   } catch (err: any) {
     console.warn('[Express /api/decompose] Error:', err?.message || err);
     return res.status(500).json({ error: err?.message || 'Failed to decompose task with LLM' });

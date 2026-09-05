@@ -866,11 +866,9 @@ export const FocusApp: React.FC<FocusAppProps> = ({ onNavigateToSalesPage }) => 
       xpReward: 30,
     };
 
-    const updatedTasks = [...tasks, newTask];
+    const updatedTasks = [newTask, ...tasks];
     setTasks(updatedTasks);
-    if (!activeTaskId) {
-      setActiveTaskId(newTask.id);
-    }
+    setActiveTaskId(newTask.id);
   };
 
   const handleAddBulkTasks = (
@@ -994,7 +992,7 @@ export const FocusApp: React.FC<FocusAppProps> = ({ onNavigateToSalesPage }) => 
   const taskToDecompose = tasks.find((t) => t.id === decomposeTaskId) || null;
 
   return (
-    <div className="min-h-screen w-full max-w-full overflow-x-clip box-border bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-amber-500 selection:text-slate-950 pb-24">
+    <div className="h-screen w-screen overflow-hidden flex flex-col justify-between p-4 bg-black text-white font-sans select-none">
       {/* Pristine Sticky Top Bar (Status Only: Brand & XP Badge) */}
       <Header
         stats={stats}
@@ -1012,113 +1010,73 @@ export const FocusApp: React.FC<FocusAppProps> = ({ onNavigateToSalesPage }) => 
       />
 
       {/* Main Container Column */}
-      <main className="flex-1 max-w-md w-full mx-auto px-4 py-4 space-y-4">
+      <main className="flex-1 max-w-md w-full mx-auto flex flex-col justify-center min-h-0 py-1 overflow-hidden">
         {/* ========================================================================= */}
         {/* TAB 1: TODAY AUTOPILOT FLOW */}
         {/* ========================================================================= */}
         {activeTab === 'today' && (
           <>
             {isDayClosed ? (
-              <div className="bg-slate-900/90 border border-indigo-500/30 rounded-3xl p-6 shadow-2xl space-y-5 text-center relative overflow-hidden animate-fadeIn">
-                <div className="absolute -top-16 -right-16 w-36 h-36 bg-indigo-500/15 rounded-full blur-3xl pointer-events-none" />
-                <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 border border-indigo-500/30 text-indigo-400 flex items-center justify-center mx-auto">
-                  <Moon className="w-6 h-6" />
+              <div className="bg-neutral-950 border border-neutral-800 rounded-3xl p-5 text-center space-y-4 shadow-xl">
+                <div className="w-10 h-10 rounded-2xl bg-indigo-500/20 border border-indigo-500/30 text-indigo-400 flex items-center justify-center mx-auto">
+                  <Moon className="w-5 h-5" />
                 </div>
-                <div className="space-y-1.5">
+                <div className="space-y-1">
                   <span className="text-[10px] font-black uppercase tracking-wider text-indigo-400">
                     Den uzavřen · Klidná mysl
                   </span>
-                  <h2 className="text-lg font-black text-slate-100">
+                  <h2 className="text-base font-black text-white">
                     Tvoje pracovní paměť je v bezpečí
                   </h2>
-                  <p className="text-xs text-slate-400 leading-relaxed max-w-xs mx-auto">
-                    Dnešní postup je bezpečně uložen. Všechny závazky na pozadí čekají v LIFE vrstvě na zítřek.
+                  <p className="text-xs text-neutral-400 leading-relaxed max-w-xs mx-auto">
+                    Dnešní postup je bezpečně uložen.
                   </p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 py-1">
-                  <div className="p-3 rounded-2xl bg-slate-950/80 border border-slate-800 text-left">
-                    <span className="text-[10px] font-bold text-slate-400 block">Dnes dokončeno</span>
-                    <span className="text-lg font-black text-emerald-400">{stats.tasksCompletedToday} kroků</span>
-                  </div>
-                  <div className="p-3 rounded-2xl bg-slate-950/80 border border-slate-800 text-left">
-                    <span className="text-[10px] font-bold text-slate-400 block">Sledované smyčky</span>
-                    <span className="text-lg font-black text-amber-400">
-                      {openLoops.filter((l) => l.status === 'open').length} smyček
-                    </span>
-                  </div>
-                </div>
-
-                <div className="space-y-2 pt-2">
+                <div className="space-y-2 pt-1">
                   <button
                     onClick={handleStartNewDay}
-                    className="w-full py-3.5 px-4 bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-400 text-slate-950 font-black text-xs sm:text-sm uppercase tracking-wider rounded-2xl shadow-xl shadow-emerald-500/20 hover:brightness-110 active:scale-98 transition-all flex items-center justify-center gap-2"
+                    className="w-full py-3 px-4 bg-emerald-400 hover:bg-emerald-300 text-black font-black text-xs uppercase tracking-wider rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95"
                   >
                     <Sprout className="w-4 h-4 stroke-[2.5]" />
-                    <span>Začít nový den (Ranní start)</span>
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      handlePlayClick();
-                      setIsEveningRecapOpen(true);
-                    }}
-                    className="w-full py-2 px-3 text-slate-400 hover:text-slate-200 text-xs font-bold transition-all"
-                  >
-                    Zobrazit večerní rekapitulaci
+                    <span>Začít nový den</span>
                   </button>
                 </div>
               </div>
             ) : (
-              <>
-                {/* Step 2: Collapsible Energy Mode Header */}
-                <Step2CapacitySelector
-                  currentCapacity={currentCapacity}
-                  onSelectCapacity={(cap) => {
-                    handlePlayClick();
-                    setCurrentCapacity(cap);
-                  }}
-                  tasks={tasks}
-                  onPlayClick={handlePlayClick}
-                  hasCheckedInToday={hasCheckedInToday}
-                  onPerformCheckIn={handlePerformCheckIn}
-                />
-
-                {/* The Continuous Autopilot Flow Engine */}
-                <TodayFlow
-                  activeTask={activeTask}
-                  upNextTasks={upNextTasks}
-                  onCompleteTask={handleCompleteTask}
-                  onSkipTask={handleSkipTask}
-                  onParkTask={handleParkTask}
-                  onDropTask={handleDropTask}
-                  onSelectTask={(id) => {
-                    handlePlayClick();
-                    setActiveTaskId(id);
-                  }}
-                  onDecomposeTask={(id) => {
-                    handlePlayClick();
-                    setDecomposeTaskId(id);
-                  }}
-                  onUpdateTaskSubtasks={handleUpdateTaskSubtasks}
-                  onAddSubtask={handleAddSubtask}
-                  onToggleSubtask={handleToggleSubtask}
-                  onQuickAddTask={handleQuickAddTask}
-                  onOpenDumpModal={() => setIsBulkDumpOpen(true)}
-                  onPlayClick={handlePlayClick}
-                  onTick={handleTick}
-                  onTimerComplete={handleTimerComplete}
-                  onAwardXp={handleAwardXp}
-                  currentCapacity={currentCapacity}
-                  soundEnabled={settings.soundEnabled}
-                  hapticEnabled={settings.hapticEnabled}
-                  totalPendingCount={pendingTasks.length}
-                  isPro={freemium.isPro}
-                  completedTasksCountToday={freemium.completedTasksCount}
-                  onOpenPaywall={() => setIsPaywallOpen(true)}
-                  onOpenRestoreLicense={() => setIsRestoreLicenseOpen(true)}
-                />
-              </>
+              <TodayFlow
+                activeTask={activeTask}
+                upNextTasks={upNextTasks}
+                onCompleteTask={handleCompleteTask}
+                onSkipTask={handleSkipTask}
+                onParkTask={handleParkTask}
+                onDropTask={handleDropTask}
+                onSelectTask={(id) => {
+                  handlePlayClick();
+                  setActiveTaskId(id);
+                }}
+                onDecomposeTask={(id) => {
+                  handlePlayClick();
+                  setDecomposeTaskId(id);
+                }}
+                onUpdateTaskSubtasks={handleUpdateTaskSubtasks}
+                onAddSubtask={handleAddSubtask}
+                onToggleSubtask={handleToggleSubtask}
+                onQuickAddTask={handleQuickAddTask}
+                onOpenDumpModal={() => setIsBulkDumpOpen(true)}
+                onPlayClick={handlePlayClick}
+                onTick={handleTick}
+                onTimerComplete={handleTimerComplete}
+                onAwardXp={handleAwardXp}
+                currentCapacity={currentCapacity}
+                soundEnabled={settings.soundEnabled}
+                hapticEnabled={settings.hapticEnabled}
+                totalPendingCount={pendingTasks.length}
+                isPro={freemium.isPro}
+                completedTasksCountToday={freemium.completedTasksCount}
+                onOpenPaywall={() => setIsPaywallOpen(true)}
+                onOpenRestoreLicense={() => setIsRestoreLicenseOpen(true)}
+              />
             )}
           </>
         )}
@@ -1127,73 +1085,79 @@ export const FocusApp: React.FC<FocusAppProps> = ({ onNavigateToSalesPage }) => 
         {/* TAB 2: BACKLOG & INBOX (Includes Daily Tasks & Open Loops) */}
         {/* ========================================================================= */}
         {activeTab === 'backlog' && (
-          <BacklogView
-            tasks={tasks}
-            activeTaskId={activeTask?.id || null}
-            openLoops={openLoops}
-            isPro={freemium.isPro}
-            onOpenPaywall={() => setIsPaywallOpen(true)}
-            onSelectActiveTask={(id) => {
-              setActiveTaskId(id);
-              setActiveTab('today');
-            }}
-            onToggleComplete={handleToggleComplete}
-            onDeleteTask={handleDeleteTask}
-            onAddBulkTasks={handleAddBulkTasks}
-            onReorderTasks={handleReorderTasks}
-            onDecomposeTask={(id) => {
-              handlePlayClick();
-              setDecomposeTaskId(id);
-            }}
-            onAddOpenLoop={handleAddOpenLoop}
-            onCompleteOpenLoop={handleCompleteOpenLoop}
-            onDropOpenLoop={handleDropOpenLoop}
-            onPromoteLoopToToday={handlePromoteLoopToToday}
-            onPlayClick={handlePlayClick}
-          />
+          <div className="h-full overflow-y-auto custom-scrollbar">
+            <BacklogView
+              tasks={tasks}
+              activeTaskId={activeTask?.id || null}
+              openLoops={openLoops}
+              isPro={freemium.isPro}
+              onOpenPaywall={() => setIsPaywallOpen(true)}
+              onSelectActiveTask={(id) => {
+                setActiveTaskId(id);
+                setActiveTab('today');
+              }}
+              onToggleComplete={handleToggleComplete}
+              onDeleteTask={handleDeleteTask}
+              onAddBulkTasks={handleAddBulkTasks}
+              onReorderTasks={handleReorderTasks}
+              onDecomposeTask={(id) => {
+                handlePlayClick();
+                setDecomposeTaskId(id);
+              }}
+              onAddOpenLoop={handleAddOpenLoop}
+              onCompleteOpenLoop={handleCompleteOpenLoop}
+              onDropOpenLoop={handleDropOpenLoop}
+              onPromoteLoopToToday={handlePromoteLoopToToday}
+              onPlayClick={handlePlayClick}
+            />
+          </div>
         )}
 
         {/* ========================================================================= */}
         {/* TAB 3: TOOLKIT (Calm Utilities: Meal Prep & Spending Pause) */}
         {/* ========================================================================= */}
         {activeTab === 'toolkit' && (
-          <ToolkitView
-            currentCapacity={currentCapacity}
-            customMeals={customMeals}
-            spendingPauses={spendingPauses}
-            isPro={freemium.isPro}
-            onOpenPaywall={() => setIsPaywallOpen(true)}
-            onAddCustomMeal={handleAddCustomMeal}
-            onQueueMealTask={handleQueueMealTask}
-            onCookMeal={handleCookMeal}
-            onAddSpendingPause={handleAddSpendingPause}
-            onResolveSpendingPause={handleResolveSpendingPause}
-            onPlayClick={handlePlayClick}
-          />
+          <div className="h-full overflow-y-auto custom-scrollbar">
+            <ToolkitView
+              currentCapacity={currentCapacity}
+              customMeals={customMeals}
+              spendingPauses={spendingPauses}
+              isPro={freemium.isPro}
+              onOpenPaywall={() => setIsPaywallOpen(true)}
+              onAddCustomMeal={handleAddCustomMeal}
+              onQueueMealTask={handleQueueMealTask}
+              onCookMeal={handleCookMeal}
+              onAddSpendingPause={handleAddSpendingPause}
+              onResolveSpendingPause={handleResolveSpendingPause}
+              onPlayClick={handlePlayClick}
+            />
+          </div>
         )}
 
         {/* ========================================================================= */}
         {/* TAB 4: SOS STATE & RECHARGE */}
         {/* ========================================================================= */}
         {activeTab === 'sos' && (
-          <SosView
-            onAwardXp={handleAwardXp}
-            onSetCapacity={(cap) => setCurrentCapacity(cap)}
-            onAddQuickTask={(taskData) => {
-              const newTask: Task = {
-                ...taskData,
-                id: `t-fuel-${Date.now()}`,
-                completed: false,
-                createdAt: Date.now(),
-              };
-              setTasks([newTask, ...tasks]);
-              setActiveTaskId(newTask.id);
-            }}
-            onNavigateToToday={() => setActiveTab('today')}
-            soundEnabled={settings.soundEnabled}
-            hapticEnabled={settings.hapticEnabled}
-            onPlayClick={handlePlayClick}
-          />
+          <div className="h-full overflow-y-auto custom-scrollbar">
+            <SosView
+              onAwardXp={handleAwardXp}
+              onSetCapacity={(cap) => setCurrentCapacity(cap)}
+              onAddQuickTask={(taskData) => {
+                const newTask: Task = {
+                  ...taskData,
+                  id: `t-fuel-${Date.now()}`,
+                  completed: false,
+                  createdAt: Date.now(),
+                };
+                setTasks([newTask, ...tasks]);
+                setActiveTaskId(newTask.id);
+              }}
+              onNavigateToToday={() => setActiveTab('today')}
+              soundEnabled={settings.soundEnabled}
+              hapticEnabled={settings.hapticEnabled}
+              onPlayClick={handlePlayClick}
+            />
+          </div>
         )}
       </main>
 

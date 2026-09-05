@@ -19,10 +19,10 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
   onPlayClick,
 }) => {
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 max-w-md mx-auto px-3 pb-[env(safe-area-inset-bottom,16px)] pt-1 pointer-events-none flex justify-center">
+    <div className="shrink-0 w-full max-w-md mx-auto pt-1 pointer-events-none flex justify-center z-40">
       <nav
         aria-label="Main Navigation"
-        className="pointer-events-auto w-full bg-[#0B0F17]/95 backdrop-blur-xl border border-white/10 shadow-2xl shadow-slate-950/90 rounded-2xl p-1.5 flex items-center justify-between gap-1 ring-1 ring-white/5"
+        className="pointer-events-auto w-full bg-neutral-950 border border-neutral-800 shadow-2xl rounded-2xl p-1.5 flex items-center justify-between gap-1"
       >
         {/* 1. Today Flow (Autopilot) */}
         <button

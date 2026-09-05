@@ -22,7 +22,7 @@ export const Header: React.FC<HeaderProps> = ({
   recentXpGain,
 }) => {
   return (
-    <header className="sticky top-0 z-50 w-full bg-[#080C14]/95 backdrop-blur-md border-b border-slate-800/90 px-3 sm:px-4 pt-[max(env(safe-area-inset-top),0.75rem)] pb-2.5 shadow-lg shadow-black/40">
+    <header className="shrink-0 z-40 w-full bg-black border-b border-neutral-800/90 px-3 py-2">
       <div className="max-w-md mx-auto flex items-center justify-between gap-2">
         {/* Official Dopamine OS Neon Brain Logo */}
         <button
