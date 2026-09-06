@@ -60,7 +60,7 @@ export const OpenLoopsDrawer: React.FC<OpenLoopsDrawerProps> = ({
 
   if (!isOpen) return null;
 
-  const activeLoops = openLoops.filter((l) => l.status === 'open');
+  const activeLoops = (openLoops || []).filter((l) => l?.status === 'open');
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -266,11 +266,11 @@ export const OpenLoopsDrawer: React.FC<OpenLoopsDrawerProps> = ({
               </p>
             </div>
           ) : (
-            activeLoops.map((loop) => {
-              const formattedDue = formatDueDateTime(loop.dueDate);
+            (activeLoops || []).map((loop) => {
+              const formattedDue = formatDueDateTime(loop?.dueDate);
               return (
                 <div
-                  key={loop.id}
+                  key={loop?.id}
                   className="p-3 rounded-2xl bg-slate-950/90 border border-slate-800 hover:border-slate-700 transition-all space-y-2"
                 >
                   <div className="flex items-start justify-between gap-2">

@@ -116,7 +116,7 @@ export const StepDecomposer: React.FC<StepDecomposerProps> = ({
 
   const handleConfirm = () => {
     onPlayClick();
-    const finalSteps = steps.map((s) => s.trim()).filter(Boolean);
+    const finalSteps = (steps || []).map((s) => s?.trim()).filter(Boolean);
     if (finalSteps.length === 0) return;
     onConfirmDecompose(task.id, finalSteps);
     onClose();
@@ -268,7 +268,7 @@ export const StepDecomposer: React.FC<StepDecomposerProps> = ({
             </div>
           ) : (
             <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
-              {steps.map((st, idx) => (
+              {(steps || []).map((st, idx) => (
                 <div
                   key={idx}
                   className="flex items-center gap-2 p-2.5 rounded-2xl bg-slate-950 border border-slate-800"

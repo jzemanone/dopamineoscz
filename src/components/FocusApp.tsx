@@ -67,17 +67,21 @@ export const FocusApp: React.FC<FocusAppProps> = ({ onNavigateToSalesPage }) => 
   // Load unified state (persisted under focus_flow_v3)
   const [initialState] = useState<FocusFlowState>(loadAppState);
 
-  const [tasks, setTasks] = useState<Task[]>(initialState.tasks);
+  const [tasks, setTasks] = useState<Task[]>(
+    Array.isArray(initialState?.tasks) && initialState.tasks.length > 0
+      ? initialState.tasks
+      : DEFAULT_TASKS
+  );
   const [openLoops, setOpenLoops] = useState<OpenLoop[]>(
-    initialState.openLoops && initialState.openLoops.length > 0
+    Array.isArray(initialState?.openLoops) && initialState.openLoops.length > 0
       ? initialState.openLoops
       : DEFAULT_OPEN_LOOPS
   );
   const [spendingPauses, setSpendingPauses] = useState<SpendingPause[]>(
-    initialState.spendingPauses || []
+    Array.isArray(initialState?.spendingPauses) ? initialState.spendingPauses : []
   );
   const [customMeals, setCustomMeals] = useState<MealIdea[]>(
-    initialState.customMeals || []
+    Array.isArray(initialState?.customMeals) ? initialState.customMeals : []
   );
   const [stats, setStats] = useState<UserStats>(initialState.stats);
   const [settings, setSettings] = useState<AppSettings>(initialState.settings);
@@ -291,25 +295,25 @@ export const FocusApp: React.FC<FocusAppProps> = ({ onNavigateToSalesPage }) => 
   ]);
 
   // Determine active task & continuous queue
-  const pendingTasks = tasks.filter((t) => !t.completed);
+  const pendingTasks = (tasks || []).filter((t) => !t?.completed);
 
-  let activeTask = tasks.find((t) => t.id === activeTaskId && !t.completed) || null;
+  let activeTask = (tasks || []).find((t) => t?.id === activeTaskId && !t?.completed) || null;
 
   // Auto-pull fallback: Never leave user stranded if pending tasks exist!
   if (!activeTask && pendingTasks.length > 0) {
     const matching = pendingTasks.find(
       (t) =>
-        t.energyLevel === currentCapacity ||
-        (currentCapacity === 'low' && t.estimatedMinutes <= 2) ||
+        t?.energyLevel === currentCapacity ||
+        (currentCapacity === 'low' && (t?.estimatedMinutes || 0) <= 2) ||
         (currentCapacity === 'medium' &&
-          t.estimatedMinutes > 2 &&
-          t.estimatedMinutes <= 10) ||
-        (currentCapacity === 'high' && t.estimatedMinutes > 10)
+          (t?.estimatedMinutes || 0) > 2 &&
+          (t?.estimatedMinutes || 0) <= 10) ||
+        (currentCapacity === 'high' && (t?.estimatedMinutes || 0) > 10)
     );
     activeTask = matching || pendingTasks[0];
   }
 
-  const upNextTasks = pendingTasks.filter((t) => t.id !== activeTask?.id);
+  const upNextTasks = (pendingTasks || []).filter((t) => t?.id !== activeTask?.id);
 
   // Audio & Haptic Feedback Helpers
   const handleToggleSound = () => {
@@ -446,8 +450,8 @@ export const FocusApp: React.FC<FocusAppProps> = ({ onNavigateToSalesPage }) => 
     handleAwardXp(30, 'Otevřená smyčka vyřešena (+30 XP)');
 
     setOpenLoops((prev) =>
-      prev.map((l) =>
-        l.id === loopId
+      (prev || []).map((l) =>
+        l?.id === loopId
           ? { ...l, status: 'done', completedAt: Date.now() }
           : l
       )
@@ -456,8 +460,8 @@ export const FocusApp: React.FC<FocusAppProps> = ({ onNavigateToSalesPage }) => 
 
   const handlePostponeOpenLoop = (loopId: string) => {
     setOpenLoops((prev) =>
-      prev.map((l) => {
-        if (l.id === loopId) {
+      (prev || []).map((l) => {
+        if (l?.id === loopId) {
           const nextDueStr = postponeDueDateByOneDay(l.dueDate);
           return {
             ...l,
@@ -475,8 +479,8 @@ export const FocusApp: React.FC<FocusAppProps> = ({ onNavigateToSalesPage }) => 
 
   const handleMarkLoopNotified = (loopId: string) => {
     setOpenLoops((prev) =>
-      prev.map((l) =>
-        l.id === loopId
+      (prev || []).map((l) =>
+        l?.id === loopId
           ? { ...l, notified: true, notifiedAt: Date.now() }
           : l
       )
@@ -486,7 +490,7 @@ export const FocusApp: React.FC<FocusAppProps> = ({ onNavigateToSalesPage }) => 
   const handleDropOpenLoop = (loopId: string) => {
     soundManager.playClick(settings.soundEnabled);
     setOpenLoops((prev) =>
-      prev.map((l) => (l.id === loopId ? { ...l, status: 'dropped' } : l))
+      (prev || []).map((l) => (l?.id === loopId ? { ...l, status: 'dropped' } : l))
     );
   };
 
@@ -531,8 +535,8 @@ export const FocusApp: React.FC<FocusAppProps> = ({ onNavigateToSalesPage }) => 
 
   const handleResolveSpendingPause = (pauseId: string, outcome: 'bought' | 'skipped') => {
     setSpendingPauses((prev) =>
-      prev.map((p) =>
-        p.id === pauseId
+      (prev || []).map((p) =>
+        p?.id === pauseId
           ? {
               ...p,
               outcome,
@@ -554,8 +558,8 @@ export const FocusApp: React.FC<FocusAppProps> = ({ onNavigateToSalesPage }) => 
 
   const handleMarkPauseNotified = (pauseId: string) => {
     setSpendingPauses((prev) =>
-      prev.map((p) =>
-        p.id === pauseId
+      (prev || []).map((p) =>
+        p?.id === pauseId
           ? { ...p, notified: true, notifiedAt: Date.now() }
           : p
       )
@@ -595,13 +599,13 @@ export const FocusApp: React.FC<FocusAppProps> = ({ onNavigateToSalesPage }) => 
       createdAt: Date.now(),
       xpReward: 10,
       isDecomposed: true,
-      subtasks: microSteps.map((s, idx) => ({
+      subtasks: (microSteps || []).map((s, idx) => ({
         id: `st-meal-${Date.now()}-${idx}`,
         title: s,
         completed: false,
       })),
     };
-    setTasks((prev) => [newTask, ...prev]);
+    setTasks((prev) => [newTask, ...(prev || [])]);
     setActiveTaskId(newTask.id);
     setActiveTab('today');
     triggerXpToast(10, 'Jídlo zařazeno s mikro-kroky do dnešní fronty!');
@@ -645,7 +649,7 @@ export const FocusApp: React.FC<FocusAppProps> = ({ onNavigateToSalesPage }) => 
     }
 
     // 2. Primary Needle Mover Task (with decomposed 3 steps)
-    const subtasks = data.steps.map((title, idx) => ({
+    const subtasks = (data.steps || []).map((title, idx) => ({
       id: `sub-nav-${Date.now()}-${idx}`,
       title,
       completed: false,
@@ -672,7 +676,7 @@ export const FocusApp: React.FC<FocusAppProps> = ({ onNavigateToSalesPage }) => 
     createdList.push(primaryTaskObj);
 
     // 3. Stash tasks
-    const stashTasks: Task[] = data.orbitalStash.map((thought, idx) => ({
+    const stashTasks: Task[] = (data.orbitalStash || []).map((thought, idx) => ({
       id: `t-stash-${Date.now()}-${idx}`,
       title: thought,
       estimatedMinutes: 5,
@@ -684,9 +688,9 @@ export const FocusApp: React.FC<FocusAppProps> = ({ onNavigateToSalesPage }) => 
     }));
     createdList.push(...stashTasks);
 
-    const updatedTasks = [...createdList, ...tasks];
+    const updatedTasks = [...createdList, ...(tasks || [])];
     setTasks(updatedTasks);
-    setActiveTaskId(createdList[0].id);
+    setActiveTaskId(createdList[0]?.id || null);
 
     // If loops were identified during launchpad brain dump, store them
     if (data.createdLoops && data.createdLoops.length > 0) {
@@ -765,8 +769,8 @@ export const FocusApp: React.FC<FocusAppProps> = ({ onNavigateToSalesPage }) => 
     launchConfetti();
 
     // Mark task completed
-    const updatedTasks = tasks.map((t) =>
-      t.id === taskId ? { ...t, completed: true, completedAt: Date.now() } : t
+    const updatedTasks = (tasks || []).map((t) =>
+      t?.id === taskId ? { ...t, completed: true, completedAt: Date.now() } : t
     );
     setTasks(updatedTasks);
 
@@ -874,14 +878,14 @@ export const FocusApp: React.FC<FocusAppProps> = ({ onNavigateToSalesPage }) => 
   const handleAddBulkTasks = (
     newTasksData: Omit<Task, 'id' | 'createdAt' | 'completed'>[]
   ) => {
-    const createdTasks: Task[] = newTasksData.map((d, idx) => ({
+    const createdTasks: Task[] = (newTasksData || []).map((d, idx) => ({
       ...d,
       id: `t-bulk-${Date.now()}-${idx}`,
       completed: false,
       createdAt: Date.now() + idx,
     }));
 
-    const updatedTasks = [...tasks, ...createdTasks];
+    const updatedTasks = [...(tasks || []), ...createdTasks];
     setTasks(updatedTasks);
     if (!activeTaskId && createdTasks.length > 0) {
       setActiveTaskId(createdTasks[0].id);
@@ -889,10 +893,11 @@ export const FocusApp: React.FC<FocusAppProps> = ({ onNavigateToSalesPage }) => 
   };
 
   const handleToggleSubtask = (taskId: string, subtaskId: string) => {
-    const updatedTasks = tasks.map((t) => {
-      if (t.id === taskId && t.subtasks) {
-        const updatedSubs = t.subtasks.map((s) =>
-          s.id === subtaskId ? { ...s, completed: !s.completed } : s
+    const updatedTasks = (tasks || []).map((t) => {
+      if (t?.id === taskId) {
+        const subs = t.subtasks || [];
+        const updatedSubs = subs.map((s) =>
+          s?.id === subtaskId ? { ...s, completed: !s.completed } : s
         );
         return { ...t, subtasks: updatedSubs };
       }
@@ -902,8 +907,8 @@ export const FocusApp: React.FC<FocusAppProps> = ({ onNavigateToSalesPage }) => 
   };
 
   const handleAddSubtask = (taskId: string, title: string) => {
-    const updatedTasks = tasks.map((t) => {
-      if (t.id === taskId) {
+    const updatedTasks = (tasks || []).map((t) => {
+      if (t?.id === taskId) {
         const subs = t.subtasks || [];
         const newSub = {
           id: `sub-${Date.now()}-${Math.random().toString(36).substring(2, 5)}`,
@@ -918,9 +923,9 @@ export const FocusApp: React.FC<FocusAppProps> = ({ onNavigateToSalesPage }) => 
   };
 
   const handleUpdateTaskSubtasks = (taskId: string, subtaskTitles: string[]) => {
-    const updatedTasks = tasks.map((t) => {
-      if (t.id === taskId) {
-        const newSubs = subtaskTitles.map((title, idx) => ({
+    const updatedTasks = (tasks || []).map((t) => {
+      if (t?.id === taskId) {
+        const newSubs = (subtaskTitles || []).map((title, idx) => ({
           id: `sub-dec-${Date.now()}-${idx}`,
           title,
           completed: false,
@@ -944,27 +949,27 @@ export const FocusApp: React.FC<FocusAppProps> = ({ onNavigateToSalesPage }) => 
     handleAwardXp(bonusXp, `Časovač dokončen (${minutes} min fokusu)`);
     setStats((prev) => ({
       ...prev,
-      totalFocusMinutes: prev.totalFocusMinutes + Math.round(minutes),
+      totalFocusMinutes: (prev?.totalFocusMinutes || 0) + Math.round(minutes),
     }));
   };
 
   const handleToggleComplete = (taskId: string) => {
-    const target = tasks.find((t) => t.id === taskId);
+    const target = (tasks || []).find((t) => t?.id === taskId);
     if (!target) return;
     if (!target.completed) {
       handleCompleteTask(taskId);
     } else {
       setTasks(
-        tasks.map((t) => (t.id === taskId ? { ...t, completed: false } : t))
+        (tasks || []).map((t) => (t?.id === taskId ? { ...t, completed: false } : t))
       );
     }
   };
 
   const handleDeleteTask = (taskId: string) => {
-    const remaining = tasks.filter((t) => t.id !== taskId);
+    const remaining = (tasks || []).filter((t) => t?.id !== taskId);
     setTasks(remaining);
     if (activeTaskId === taskId) {
-      const remainingPending = remaining.filter((t) => !t.completed);
+      const remainingPending = remaining.filter((t) => !t?.completed);
       setActiveTaskId(remainingPending.length > 0 ? remainingPending[0].id : null);
     }
   };
@@ -992,7 +997,7 @@ export const FocusApp: React.FC<FocusAppProps> = ({ onNavigateToSalesPage }) => 
   const taskToDecompose = tasks.find((t) => t.id === decomposeTaskId) || null;
 
   return (
-    <div className="h-[100dvh] w-screen overflow-hidden flex flex-col justify-between p-3 sm:p-4 bg-black text-white font-sans select-none">
+    <div className="h-screen h-[100dvh] w-screen overflow-hidden flex flex-col justify-between p-3 sm:p-4 bg-black text-white font-sans select-none">
       {/* Pristine Sticky Top Bar (Status Only: Brand & XP Badge) */}
       <Header
         stats={stats}

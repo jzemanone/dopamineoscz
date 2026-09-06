@@ -58,8 +58,8 @@ export const MealPickerModal: React.FC<MealPickerModalProps> = ({
   if (!isOpen) return null;
 
   // Combine default preset meals with custom user-created meals
-  const allMeals: MealIdea[] = [...ZERO_DECISION_MEALS, ...customMeals];
-  const filteredMeals = allMeals.filter((m) => m.effort === selectedEffort);
+  const allMeals: MealIdea[] = [...(ZERO_DECISION_MEALS || []), ...(customMeals || [])];
+  const filteredMeals = allMeals.filter((m) => m?.effort === selectedEffort);
 
   const handlePickForMe = () => {
     onPlayClick();
@@ -282,13 +282,13 @@ export const MealPickerModal: React.FC<MealPickerModalProps> = ({
 
         {/* Meal List in Selected Category (Scrollable with custom dark scrollbar) */}
         <div className="flex-1 overflow-y-auto space-y-2.5 pr-1 custom-scrollbar">
-          {filteredMeals.map((meal) => {
-            const isDone = loggedMeals[meal.id];
-            const isCustom = meal.id.startsWith('custom-meal-');
+          {(filteredMeals || []).map((meal) => {
+            const isDone = loggedMeals[meal?.id];
+            const isCustom = meal?.id?.startsWith('custom-meal-');
 
             return (
               <div
-                key={meal.id}
+                key={meal?.id}
                 className="p-3 bg-slate-950/80 border border-slate-800/80 rounded-2xl hover:border-slate-700 transition-all flex flex-col gap-2 relative group"
               >
                 <div className="flex items-start justify-between gap-2">
@@ -465,7 +465,7 @@ export const MealPickerModal: React.FC<MealPickerModalProps> = ({
                     Ikona / Emoji
                   </label>
                   <div className="flex flex-wrap gap-1.5">
-                    {emojiOptions.map((em) => (
+                    {(emojiOptions || []).map((em) => (
                       <button
                         key={em}
                         type="button"

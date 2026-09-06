@@ -278,25 +278,25 @@ export const ToolkitView: React.FC<ToolkitProps> = ({
     const currentMonth = new Date().getMonth();
     const currentYear = new Date().getFullYear();
 
-    return spendingPauses
+    return (spendingPauses || [])
       .filter((p) => {
-        if (p.outcome !== 'skipped') return false;
-        const resolvedDate = new Date(p.resolvedAt || p.createdAt);
+        if (p?.outcome !== 'skipped') return false;
+        const resolvedDate = new Date(p?.resolvedAt || p?.createdAt || Date.now());
         return resolvedDate.getMonth() === currentMonth && resolvedDate.getFullYear() === currentYear;
       })
-      .reduce((sum, p) => sum + (p.cost || 0), 0);
+      .reduce((sum, p) => sum + (p?.cost || 0), 0);
   }, [spendingPauses]);
 
   // Separate active pending pauses vs history
   const activePauses = useMemo(() => {
-    return spendingPauses.filter((p) => !p.outcome);
+    return (spendingPauses || []).filter((p) => !p?.outcome);
   }, [spendingPauses]);
 
   const pastPauses = useMemo(() => {
-    return spendingPauses.filter((p) => p.outcome).slice(0, 5);
+    return (spendingPauses || []).filter((p) => p?.outcome).slice(0, 5);
   }, [spendingPauses]);
 
-  const isImpulseFormGated = !isPro && spendingPauses.length >= 1;
+  const isImpulseFormGated = !isPro && (spendingPauses || []).length >= 1;
 
   return (
     <div className="w-full space-y-3 pt-1 pb-4 animate-fadeIn">
@@ -476,13 +476,13 @@ export const ToolkitView: React.FC<ToolkitProps> = ({
                 </div>
 
                 {/* Ingredients Snapshot */}
-                {activeMeal.ingredients && activeMeal.ingredients.length > 0 && (
+                {activeMeal?.ingredients && activeMeal.ingredients.length > 0 && (
                   <div className="space-y-1.5">
                     <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
                       Potřebuješ:
                     </span>
                     <div className="flex flex-wrap gap-1.5">
-                      {activeMeal.ingredients.map((ing, idx) => (
+                      {(activeMeal?.ingredients || []).map((ing, idx) => (
                         <span
                           key={idx}
                           className="px-2.5 py-1 rounded-lg bg-slate-800/80 border border-slate-700/80 text-[11px] font-semibold text-slate-300"
@@ -642,24 +642,24 @@ export const ToolkitView: React.FC<ToolkitProps> = ({
               </div>
             ) : (
               <div className="space-y-2.5">
-                {activePauses.map((pause) => {
-                  const msElapsed = now - pause.createdAt;
+                {(activePauses || []).map((pause) => {
+                  const msElapsed = now - (pause?.createdAt || 0);
                   const msRemaining = Math.max(0, 24 * 60 * 60 * 1000 - msElapsed);
                   const hoursRemaining = Math.ceil(msRemaining / (1000 * 60 * 60));
                   const isReady = msRemaining <= 0;
 
                   return (
                     <div
-                      key={pause.id}
+                      key={pause?.id}
                       className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-3 shadow-lg"
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
                           <h5 className="text-sm font-black text-slate-100 truncate">
-                            {pause.itemName}
+                            {pause?.itemName}
                           </h5>
                           <span className="text-xs font-bold text-amber-300">
-                            {pause.cost.toLocaleString()} Kč
+                            {(pause?.cost || 0).toLocaleString()} Kč
                           </span>
                         </div>
 
@@ -714,21 +714,21 @@ export const ToolkitView: React.FC<ToolkitProps> = ({
                   Nedávná rozhodnutí:
                 </span>
                 <div className="space-y-1.5">
-                  {pastPauses.map((p) => (
+                  {(pastPauses || []).map((p) => (
                     <div
-                      key={p.id}
+                      key={p?.id}
                       className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-850 flex items-center justify-between text-xs"
                     >
                       <span className="text-slate-300 font-medium truncate max-w-[200px]">
-                        {p.itemName}
+                        {p?.itemName}
                       </span>
-                      {p.outcome === 'skipped' ? (
+                      {p?.outcome === 'skipped' ? (
                         <span className="text-emerald-400 font-bold">
-                          Ušetřeno {p.cost} Kč
+                          Ušetřeno {p?.cost || 0} Kč
                         </span>
                       ) : (
                         <span className="text-slate-400 font-medium">
-                          Koupeno ({p.cost} Kč)
+                          Koupeno ({p?.cost || 0} Kč)
                         </span>
                       )}
                     </div>

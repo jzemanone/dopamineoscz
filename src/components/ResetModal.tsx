@@ -332,12 +332,12 @@ export const ResetModal: React.FC<ResetModalProps> = ({
             </div>
 
             <div className="space-y-2.5">
-              {EMERGENCY_RESET_ACTIONS.map((action) => {
-                const isDone = completedActions[action.id];
+              {(EMERGENCY_RESET_ACTIONS || []).map((action) => {
+                const isDone = completedActions[action?.id];
 
                 return (
                   <div
-                    key={action.id}
+                    key={action?.id}
                     className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800/90 hover:border-slate-700 transition-all flex flex-col justify-between gap-3"
                   >
                     <div className="flex items-start gap-3">

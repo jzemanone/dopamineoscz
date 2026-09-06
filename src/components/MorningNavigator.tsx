@@ -68,7 +68,7 @@ export const MorningNavigator: React.FC<MorningNavigatorProps> = ({
   const [completedStepIndices, setCompletedStepIndices] = useState<number[]>([]);
   const [recentCelebrationIndex, setRecentCelebrationIndex] = useState<number | null>(null);
 
-  const activeLoops = openLoops.filter((l) => l.status === 'open');
+  const activeLoops = (openLoops || []).filter((l) => l?.status === 'open');
 
   // Quick preset templates for busy mornings
   const presets = [
@@ -362,9 +362,9 @@ export const MorningNavigator: React.FC<MorningNavigatorProps> = ({
                     </div>
 
                     <div className="space-y-1.5 max-h-32 overflow-y-auto custom-scrollbar pr-0.5 w-full box-border">
-                      {activeLoops.map((loop) => (
+                      {(activeLoops || []).map((loop) => (
                         <div
-                          key={loop.id}
+                          key={loop?.id}
                           className="p-2 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between gap-1.5 w-full box-border"
                         >
                           <div className="min-w-0 flex-1 flex flex-col gap-0.5">
@@ -720,7 +720,7 @@ export const MorningNavigator: React.FC<MorningNavigatorProps> = ({
                           V zásobníku nejsou žádné další úkoly.
                         </p>
                       ) : (
-                        orbitalStash.map((item, idx) => (
+                        (orbitalStash || []).map((item, idx) => (
                           <button
                             key={idx}
                             type="button"

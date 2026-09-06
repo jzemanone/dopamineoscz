@@ -115,7 +115,7 @@ app.post('/api/decompose', async (req, res) => {
 
     const systemPrompt = `Jsi nekompromisní asistent pro lidi s těžkým ADHD. Uživatel ti zadá konkrétní úkol. Musíš vymyslet 3 absolutně konkrétní, fyzické a doslovné mikro-kroky POUZE pro tento zadaný úkol (žádné obecné šablony jako 'otevři program', pokud jde o mytí nádobí!). PRAVIDLA: 1. Piš česky. 2. Žádné motivační kecy. 3. Každý krok max 6 slov. Vrať pouze JSON pole 3 stringů.`;
 
-    const modelsToTry = ['gemini-3.6-flash', 'gemini-3.8-flash'];
+    const modelsToTry = ['gemini-3.8-flash', 'gemini-flash-latest', 'gemini-3.1-flash-lite'];
     let text = '';
     let lastErr: any = null;
 
@@ -158,9 +158,9 @@ app.post('/api/decompose', async (req, res) => {
 
     let steps: string[] = [];
     if (Array.isArray(parsed)) {
-      steps = parsed.map((s: any) => String(s).trim()).filter(Boolean);
+      steps = (parsed || []).map((s: any) => String(s).trim()).filter(Boolean);
     } else if (parsed && Array.isArray(parsed.steps)) {
-      steps = parsed.steps.map((s: any) => String(s).trim()).filter(Boolean);
+      steps = (parsed.steps || []).map((s: any) => String(s).trim()).filter(Boolean);
     }
 
     if (steps.length > 0) {

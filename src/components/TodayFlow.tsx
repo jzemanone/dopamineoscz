@@ -180,11 +180,11 @@ export const TodayFlow: React.FC<TodayFlowProps> = ({
       setTimeout(() => setRecentStepCelebrationId(null), 1800);
     }
 
-    if (subtasks.some((s) => s.id === step.id)) {
+    if (subtasks.some((s) => s?.id === step?.id)) {
       onToggleSubtask(activeTask.id, step.id);
     } else {
       // If using fallback dummy steps, create actual subtasks in task
-      const updatedTitles = displaySteps.map((s) => s.title);
+      const updatedTitles = (displaySteps || []).map((s) => s.title);
       onUpdateTaskSubtasks(activeTask.id, updatedTitles);
     }
   };
@@ -314,13 +314,13 @@ export const TodayFlow: React.FC<TodayFlowProps> = ({
 
         {/* Steps List */}
         <div className="space-y-2">
-          {displaySteps.map((step, idx) => {
-            const isDone = !!step.completed;
-            const isCelebrating = recentStepCelebrationId === step.id;
+          {(displaySteps || []).map((step, idx) => {
+            const isDone = !!step?.completed;
+            const isCelebrating = recentStepCelebrationId === step?.id;
 
             return (
               <button
-                key={step.id || idx}
+                key={step?.id || idx}
                 type="button"
                 disabled={!activeTask}
                 onClick={() => handleToggleStep(step, idx)}
@@ -434,13 +434,13 @@ export const TodayFlow: React.FC<TodayFlowProps> = ({
                   </p>
                 </div>
               ) : (
-                upNextTasks.map((task, idx) => (
+                (upNextTasks || []).map((task, idx) => (
                   <button
-                    key={task.id}
+                    key={task?.id || idx}
                     type="button"
                     onClick={() => {
                       onPlayClick();
-                      onSelectTask(task.id);
+                      if (task?.id) onSelectTask(task.id);
                       setIsSwapModalOpen(false);
                     }}
                     className="w-full text-left p-3.5 rounded-2xl bg-neutral-900 hover:bg-neutral-850 border border-neutral-800 hover:border-neutral-700 transition-all flex items-center justify-between gap-3 group active:scale-[0.99]"
@@ -450,7 +450,7 @@ export const TodayFlow: React.FC<TodayFlowProps> = ({
                         {idx + 1}
                       </span>
                       <span className="text-sm font-bold text-neutral-200 group-hover:text-white truncate">
-                        {task.title}
+                        {task?.title}
                       </span>
                     </div>
 

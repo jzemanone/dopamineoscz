@@ -143,15 +143,15 @@ export const Step1BrainDump: React.FC<Step1BrainDumpProps> = ({
               <Zap className="w-3 h-3 text-amber-400" /> Okamžité 2minutové startéry:
             </p>
             <div className="flex flex-wrap gap-1.5">
-              {PRESET_TASKS.map((preset, idx) => (
+              {(PRESET_TASKS || []).map((preset, idx) => (
                 <button
                   key={idx}
                   type="button"
                   onClick={() => handleSelectPreset(preset)}
                   className="text-left text-[11px] px-2.5 py-1 rounded-lg bg-slate-950 hover:bg-slate-800 text-slate-300 border border-slate-800/80 hover:border-amber-500/40 transition-all flex items-center gap-1.5"
                 >
-                  <span className="text-amber-400 font-bold">+{preset.xpReward}XP</span>
-                  <span className="truncate max-w-[180px]">{preset.title}</span>
+                  <span className="text-amber-400 font-bold">+{preset?.xpReward || 25}XP</span>
+                  <span className="truncate max-w-[180px]">{preset?.title}</span>
                 </button>
               ))}
             </div>

@@ -90,18 +90,18 @@ export const BacklogView: React.FC<BacklogViewProps> = ({
   const [newLoopUrgency, setNewLoopUrgency] = useState<SoftUrgency>('few_days');
   const [remindOnDueDate, setRemindOnDueDate] = useState<boolean>(true);
 
-  const pendingTasks = tasks.filter((t) => !t.completed);
-  const completedTasks = tasks.filter((t) => t.completed);
-  const activeLoops = openLoops.filter((l) => l.status === 'open');
+  const pendingTasks = (tasks || []).filter((t) => !t?.completed);
+  const completedTasks = (tasks || []).filter((t) => t?.completed);
+  const activeLoops = (openLoops || []).filter((l) => l?.status === 'open');
 
   const filteredPending = pendingTasks.filter((t) => {
     if (filterEnergy === 'all') return true;
-    return t.energyLevel === filterEnergy;
+    return t?.energyLevel === filterEnergy;
   });
 
   const handleApplyAutoTriage = () => {
     onPlayClick();
-    const triaged = autoTriageTaskList(tasks);
+    const triaged = autoTriageTaskList(tasks || []);
     onReorderTasks(triaged);
   };
 
@@ -110,9 +110,9 @@ export const BacklogView: React.FC<BacklogViewProps> = ({
     if (!rawDumpText.trim()) return;
     onPlayClick();
     const result = autoTriageRawInput(rawDumpText, 'medium');
-    if (result.orderedTasks.length > 0) {
+    if (result && Array.isArray(result.orderedTasks) && result.orderedTasks.length > 0) {
       onAddBulkTasks(
-        result.orderedTasks.map((t) => ({
+        (result.orderedTasks || []).map((t) => ({
           title: t.title,
           estimatedMinutes: t.estimatedMinutes,
           energyLevel: t.energyLevel,
@@ -330,11 +330,11 @@ export const BacklogView: React.FC<BacklogViewProps> = ({
                 </p>
               </div>
             ) : (
-              filteredPending.map((t) => {
-                const isActive = t.id === activeTaskId;
+              (filteredPending || []).map((t) => {
+                const isActive = t?.id === activeTaskId;
                 return (
                   <div
-                    key={t.id}
+                    key={t?.id}
                     className={`p-3.5 rounded-2xl border transition-all flex items-center justify-between gap-3 ${
                       isActive
                         ? 'bg-slate-900 border-amber-500/60 shadow-lg shadow-amber-500/10 ring-1 ring-amber-500/20'
@@ -345,7 +345,7 @@ export const BacklogView: React.FC<BacklogViewProps> = ({
                       <button
                         onClick={() => {
                           onPlayClick();
-                          onToggleComplete(t.id);
+                          if (t?.id) onToggleComplete(t.id);
                         }}
                         className="p-1 text-slate-500 hover:text-amber-400 transition-colors"
                       >
@@ -440,19 +440,19 @@ export const BacklogView: React.FC<BacklogViewProps> = ({
 
               {showCompleted && (
                 <div className="space-y-1.5 mt-2">
-                  {completedTasks.map((t) => (
+                  {(completedTasks || []).map((t) => (
                     <div
-                      key={t.id}
+                      key={t?.id}
                       className="p-3 rounded-2xl bg-slate-950/60 border border-slate-850 flex items-center justify-between gap-2 text-slate-500"
                     >
                       <div className="flex items-center gap-2.5 truncate">
                         <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                        <span className="text-xs line-through truncate">{t.title}</span>
+                        <span className="text-xs line-through truncate">{t?.title}</span>
                       </div>
                       <button
                         onClick={() => {
                           onPlayClick();
-                          onToggleComplete(t.id);
+                          if (t?.id) onToggleComplete(t.id);
                         }}
                         className="text-[10px] font-bold text-slate-500 hover:text-slate-300"
                       >
@@ -652,17 +652,17 @@ export const BacklogView: React.FC<BacklogViewProps> = ({
                   </p>
                 </div>
               ) : (
-                activeLoops.map((loop) => {
-                  const formattedDue = formatDueDateTime(loop.dueDate);
+                (activeLoops || []).map((loop) => {
+                  const formattedDue = formatDueDateTime(loop?.dueDate);
                   return (
                     <div
-                      key={loop.id}
+                      key={loop?.id}
                       className="p-3.5 rounded-2xl bg-slate-900 border border-slate-800 hover:border-slate-700 transition-all space-y-2 shadow-md"
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="space-y-1.5 min-w-0 flex-1">
                           <h4 className="text-xs sm:text-sm font-bold text-slate-100 leading-snug">
-                            {loop.title}
+                            {loop?.title}
                           </h4>
                           <div className="flex flex-wrap items-center gap-1.5">
                             {loop.person && (

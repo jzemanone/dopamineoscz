@@ -163,10 +163,10 @@ export const OneTaskFocus: React.FC<OneTaskFocusProps> = ({
     );
   }
 
-  const subtasks = task.subtasks || [];
+  const subtasks = task?.subtasks || [];
   const hasSubtasks = subtasks.length > 0;
   const currentSubtask = hasSubtasks ? subtasks[activeStepIndex] || subtasks[0] : null;
-  const completedSubtasksCount = subtasks.filter((s) => s.completed).length;
+  const completedSubtasksCount = (subtasks || []).filter((s) => s?.completed).length;
 
   const handleStepDoneAndNext = () => {
     onPlayClick();
@@ -273,9 +273,9 @@ export const OneTaskFocus: React.FC<OneTaskFocusProps> = ({
                 Krok {activeStepIndex + 1} z {subtasks.length}
               </span>
               <div className="flex items-center gap-1">
-                {subtasks.map((st, idx) => (
+                {(subtasks || []).map((st, idx) => (
                   <button
-                    key={st.id}
+                    key={st?.id || idx}
                     onClick={() => {
                       onPlayClick();
                       setActiveStepIndex(idx);

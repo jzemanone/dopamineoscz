@@ -115,9 +115,9 @@ export const Step3FocusCard: React.FC<Step3FocusCardProps> = ({
     );
   }
 
-  const completedSubtasksCount = task.subtasks?.filter((s) => s.completed).length || 0;
-  const totalSubtasksCount = task.subtasks?.length || 0;
-  const xpReward = task.xpReward || 30;
+  const completedSubtasksCount = (task?.subtasks || []).filter((s) => s?.completed).length;
+  const totalSubtasksCount = (task?.subtasks || []).length;
+  const xpReward = task?.xpReward || 30;
   const isHighFriction = idleSeconds >= 120; // 2 minutes stuck without starting timer
 
   return (
@@ -234,30 +234,30 @@ export const Step3FocusCard: React.FC<Step3FocusCardProps> = ({
             </div>
 
             <div className="space-y-1.5">
-              {task.subtasks?.map((sub) => (
+              {(task?.subtasks || []).map((sub) => (
                 <button
-                  key={sub.id}
+                  key={sub?.id}
                   onClick={() => {
                     onPlayClick();
-                    onToggleSubtask(task.id, sub.id);
+                    if (task?.id && sub?.id) onToggleSubtask(task.id, sub.id);
                   }}
-                  className="w-full flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-900/90 hover:bg-slate-850 text-left border border-slate-800/80 transition-all active:scale-98"
+                  className="w-full flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-900/90 hover:bg-slate-855 text-left border border-slate-800/80 transition-all active:scale-98"
                 >
                   <span
                     className={`w-4 h-4 rounded-md border flex items-center justify-center transition-all ${
-                      sub.completed
+                      sub?.completed
                         ? 'bg-emerald-500 border-emerald-500 text-slate-950'
                         : 'border-slate-700 bg-slate-950'
                     }`}
                   >
-                    {sub.completed && <Check className="w-3 h-3 stroke-[3]" />}
+                    {sub?.completed && <Check className="w-3 h-3 stroke-[3]" />}
                   </span>
                   <span
                     className={`text-xs font-medium ${
-                      sub.completed ? 'line-through text-slate-500' : 'text-slate-200'
+                      sub?.completed ? 'line-through text-slate-500' : 'text-slate-200'
                     }`}
                   >
-                    {sub.title}
+                    {sub?.title}
                   </span>
                 </button>
               ))}

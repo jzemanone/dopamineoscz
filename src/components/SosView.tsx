@@ -256,11 +256,11 @@ export const SosView: React.FC<SosViewProps> = ({
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          {EMERGENCY_RESET_ACTIONS.map((action) => {
-            const isDone = completedActions[action.id];
+          {(EMERGENCY_RESET_ACTIONS || []).map((action) => {
+            const isDone = completedActions[action?.id];
             return (
               <button
-                key={action.id}
+                key={action?.id}
                 onClick={() => handleActionComplete(action)}
                 disabled={isDone}
                 className={`p-3 rounded-2xl border text-left flex items-center justify-between gap-3 transition-all ${
@@ -271,10 +271,10 @@ export const SosView: React.FC<SosViewProps> = ({
               >
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5 font-bold text-xs">
-                    <span>{action.title}</span>
+                    <span>{action?.title}</span>
                   </div>
                   <span className="text-[10px] text-slate-500 block mt-0.5">
-                    {action.duration} • +{action.xpReward} XP
+                    {action?.duration} • +{action?.xpReward || 15} XP
                   </span>
                 </div>
 
@@ -306,18 +306,18 @@ export const SosView: React.FC<SosViewProps> = ({
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          {DEFAULT_MEAL_IDEAS.slice(0, 4).map((meal) => (
+          {((DEFAULT_MEAL_IDEAS || []).slice(0, 4) || []).map((meal) => (
             <div
-              key={meal.id}
+              key={meal?.id}
               className="p-3 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-between gap-3"
             >
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5 font-black text-xs text-slate-200 truncate">
-                  <span>{meal.emoji}</span>
-                  <span className="truncate">{meal.name}</span>
+                  <span>{meal?.emoji}</span>
+                  <span className="truncate">{meal?.name}</span>
                 </div>
                 <span className="text-[10px] text-slate-400 block truncate mt-0.5">
-                  {meal.ingredients.slice(0, 2).join(', ')}
+                  {(meal?.ingredients || []).slice(0, 2).join(', ')}
                 </span>
               </div>
 
